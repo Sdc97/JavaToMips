@@ -4,18 +4,18 @@ public class TypeEnvironment {
     
     private Map<String,String> cont;
     private String name;
-    private TypeEnvironment parentClass;
+    private TypeEnvironment parent;
 
     public TypeEnvironment(String n) {
         cont = new HashMap<String,String>();
         name = n;
-        parentClass = null;
+        parent = null;
     }
 
     public TypeEnvironment(String n, TypeEnvironment m) {
         cont = new HashMap<String,String>();
         name = n;
-        parentClass = m;
+        parent = m;
     }
 
     public String getName() {
@@ -35,8 +35,8 @@ public class TypeEnvironment {
     }
 
     public String getType(String id) {
-        if(parentClass.contains(id)) {
-            return parentClass.getType(id);
+        if(parent.contains(id)) {
+            return parent.getType(id);
         } else {
             return getType(id);
         }
