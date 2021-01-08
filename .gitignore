@@ -5,3 +5,4 @@
 *.json
 !Typecheck.java
 !TypeEnvironment.java
+!TypeCheckHelper.java
