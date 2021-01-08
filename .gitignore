@@ -1,0 +1,7 @@
+*.java
+*.class
+*.jar
+*.jj
+*.json
+!Typecheck.java
+!TypeEnvironment.java
