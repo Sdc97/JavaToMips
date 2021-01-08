@@ -9,6 +9,9 @@ public class Typecheck extends DepthFirstVisitor {
             Goal mainnode = MiniJavaParser.Goal(); // This is the TOP node of our syntax tree. Pass around as needed.
             Typecheck checker = new Typecheck();
             checker.visit(mainnode);
+            if(!Goalcheck(mainnode)) {
+                throw new Error("Type checking failed.");
+            }
             System.out.println("Program type checked sucessfully.");
         } catch (Throwable e) {
             //System.out.println("Syntax check failed: " + e.getMessage());
@@ -16,6 +19,11 @@ public class Typecheck extends DepthFirstVisitor {
         }
     }
 
+    /*
+     * I think we will probably need a 2 pass system here, as we will need contextual information about each method and such
+     * as in the class it exists in and its scope.
+     * 
+    */
     // Helper functions
 
     public static String classname(MainClass n) {
@@ -50,20 +58,64 @@ public class Typecheck extends DepthFirstVisitor {
     } 
 
 
-
-
     //Check functions
 
+    static List<ClassDeclaration> regular_classes = new Vector<ClassDeclaration>();
+    static List<ClassExtendsDeclaration> extended_classes = new Vector<ClassExtendsDeclaration>();
+    /**
+     * Goal
+     * @param n
+     * @return true/false. Requires The MainClass object, and the objects of all classes declared. Can obtain mainclass directly from goal, others will 
+     * be obtained from visitor.
+     */
     public static boolean Goalcheck(Goal n) {
         List<String> classnames = new Vector<String>();
         classnames.add(classname(n.f0));
-        for(int i = 0; i < n.f1.size(); i++) {
-            //classnames.add(classname(n.f1.elementAt(i)));
+        for(ClassDeclaration i : regular_classes) {
+            classnames.add(i.f1.f0.tokenImage);
+        }
+        for(ClassExtendsDeclaration i : extended_classes) {
+            classnames.add(i.f1.f0.tokenImage);
+        }
+        if(!distinct(classnames)) { // Class ids are distinct
+            return false;
+        }
+        if(!MainClassCheck(n.f0)) { // Main class type checks
+            return false;
+        }
+        for(ClassDeclaration i : regular_classes) { // Regular classes type check.
+            if(!RegularClassCheck(i)) {
+                return false;
+            }
+        }
+        for(ClassExtendsDeclaration i : extended_classes) { // Extended classes type check
+            if(!ExtendedClassCheck(i)) {
+                return false;
+            }
         }
         return true;
     }
 
+    /**
+     * MainClassCheck
+     * @param n
+     * @return true if all hypotheses pass, false otherwise. Requies the type environment of the main class,
+     */
+    public static boolean MainClassCheck(MainClass n) {
+        return true;
+    }
 
+    public static boolean RegularClassCheck(ClassDeclaration n) {
+        return true;
+    }
+
+    public static boolean ExtendedClassCheck(ClassExtendsDeclaration n) {
+        return true;
+    }
+
+
+
+    // Visitor functions
 
     /**
      * f0 -> MainClass() 
@@ -134,6 +186,7 @@ public class Typecheck extends DepthFirstVisitor {
     * f5 -> "}"
     */
     public void visit(ClassDeclaration n) {
+        regular_classes.add(n);
         n.f0.accept(this);
         n.f1.accept(this);
         n.f2.accept(this);
@@ -153,6 +206,7 @@ public class Typecheck extends DepthFirstVisitor {
     * f7 -> "}"
     */
     public void visit(ClassExtendsDeclaration n) {
+        extended_classes.add(n);
         n.f0.accept(this);
         n.f1.accept(this);
         n.f2.accept(this);
