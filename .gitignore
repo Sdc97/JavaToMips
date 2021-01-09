@@ -6,3 +6,4 @@
 !Typecheck.java
 !TypeEnvironment.java
 !TypeCheckHelper.java
+!VarDec.java

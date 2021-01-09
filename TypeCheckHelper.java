@@ -80,12 +80,21 @@ public class TypeCheckHelper extends DepthFirstVisitor{
         return true;
     }
 
+    Map<String,Vector<VarDec>> classVarDecs = new HashMap<String,Vector<VarDec>>();
     /**
      * MainClassCheck
      * @param n
      * @return true if all hypotheses pass, false otherwise. Requies the type environment of the main class,
      */
-    public boolean MainClassCheck(MainClass n) {
+    public boolean MainClassCheck(MainClass n) { // TODO finish implementation of this function
+        Vector<VarDec> curr = classVarDecs.get(n.f1.f0.tokenImage);
+        List<String> ids = new Vector<String>();
+        for(VarDec i : curr) {
+            ids.add(i.id);
+        }
+        if(!distinct(ids)) {
+            return false;
+        }
         return true;
     }
 
@@ -133,6 +142,8 @@ public class TypeCheckHelper extends DepthFirstVisitor{
     * f17 -> "}"
     */
     public void visit(MainClass n) {
+        currClass = n.f1.f0.tokenImage;
+        classVarDecs.put(currClass,new Vector<VarDec>());
         n.f0.accept(this);
         n.f1.accept(this);
         n.f2.accept(this);
@@ -171,6 +182,8 @@ public class TypeCheckHelper extends DepthFirstVisitor{
     */
     public void visit(ClassDeclaration n) {
         regular_classes.add(n);
+        currClass = n.f1.f0.tokenImage;
+        classVarDecs.put(currClass,new Vector<VarDec>());
         n.f0.accept(this);
         n.f1.accept(this);
         n.f2.accept(this);
@@ -191,6 +204,8 @@ public class TypeCheckHelper extends DepthFirstVisitor{
     */
     public void visit(ClassExtendsDeclaration n) {
         extended_classes.add(n);
+        currClass = n.f1.f0.tokenImage;
+        classVarDecs.put(currClass,new Vector<VarDec>());
         n.f0.accept(this);
         n.f1.accept(this);
         n.f2.accept(this);
@@ -201,6 +216,9 @@ public class TypeCheckHelper extends DepthFirstVisitor{
         n.f7.accept(this);
     }
 
+
+    private String currClass;
+    private String currType;
     /**
      * f0 -> Type()
     * f1 -> Identifier()
@@ -210,6 +228,8 @@ public class TypeCheckHelper extends DepthFirstVisitor{
         n.f0.accept(this);
         n.f1.accept(this);
         n.f2.accept(this);
+        VarDec temp = new VarDec(currType, n.f1.f0.tokenImage);
+        classVarDecs.get(currClass).add(temp);
     }
 
     /**
@@ -286,6 +306,7 @@ public class TypeCheckHelper extends DepthFirstVisitor{
     * f2 -> "]"
     */
     public void visit(ArrayType n) {
+        currType = n.f0.tokenImage;
         n.f0.accept(this);
         n.f1.accept(this);
         n.f2.accept(this);
@@ -295,6 +316,7 @@ public class TypeCheckHelper extends DepthFirstVisitor{
      * f0 -> "boolean"
     */
     public void visit(BooleanType n) {
+        currType = n.f0.tokenImage;
         n.f0.accept(this);
     }
 
@@ -302,6 +324,7 @@ public class TypeCheckHelper extends DepthFirstVisitor{
      * f0 -> "int"
     */
     public void visit(IntegerType n) {
+        currType = n.f0.tokenImage;
         n.f0.accept(this);
     }
 
@@ -578,6 +601,7 @@ public class TypeCheckHelper extends DepthFirstVisitor{
      * f0 -> <IDENTIFIER>
     */
     public void visit(Identifier n) {
+        currType = n.f0.tokenImage;
         n.f0.accept(this);
     }
 
