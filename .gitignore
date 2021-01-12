@@ -4,6 +4,5 @@
 *.jj
 *.json
 !Typecheck.java
-!TypeEnvironment.java
-!TypeCheckHelper.java
-!VarDec.java
+!ExpressionVisitors.java
+!ContextType.java
