@@ -1,7 +1,8 @@
 import syntaxtree.*;
 import visitor.GJDepthFirst;
 
-public class StatementVisitors extends GJDepthFirst<String, ContextType> {
+public class StatementVisitor extends GJDepthFirst<String, ContextType> {
+    private ExpressionVisitors expVisitor = new ExpressionVisitors();
     /**
      * f0 -> "{" 
      * f1 -> ( Statement() )* 
@@ -21,7 +22,6 @@ public class StatementVisitors extends GJDepthFirst<String, ContextType> {
      */
     public String visit(AssignmentStatement n, ContextType argu) {
         String _ret = null;
-        ExpressionVisitors expVisitor = new ExpressionVisitors();
         String t1 = "CHANGE_ME_LATER"; //TODO: Need ContextType to get type of identifier.
         String t2 = n.f2.accept(expVisitor, argu); // type of RHS expression
         if(false) { // CHECK that t2 is a subtype of t2 through ContextType probably?
@@ -41,7 +41,6 @@ public class StatementVisitors extends GJDepthFirst<String, ContextType> {
     */
     public String visit(ArrayAssignmentStatement n, ContextType argu) { // TODO: Need ContextType to check identifier.
         String _ret=null;
-        ExpressionVisitors expVisitor = new ExpressionVisitors();
         String idVal = "CHANGE_ME_LATER"; //TODO: Need ContextType to get type of identifier. Must be of type int[].
         
         String e1 = n.f2.accept(expVisitor, argu); // Type of array indexing expression. Must be int.
@@ -68,7 +67,6 @@ public class StatementVisitors extends GJDepthFirst<String, ContextType> {
     */
     public String visit(IfStatement n, ContextType argu) {
         String _ret=null;
-        ExpressionVisitors expVisitor = new ExpressionVisitors();
         String eVal = n.f2.accept(expVisitor, argu); // Type of the expression to check. Must be boolean.
         if(!eVal.equals("boolean")) {
             throw new Error("Type error");
@@ -88,7 +86,6 @@ public class StatementVisitors extends GJDepthFirst<String, ContextType> {
     */
     public String visit(WhileStatement n, ContextType argu) {
         String _ret=null;
-        ExpressionVisitors expVisitor = new ExpressionVisitors();
         String eVal = n.f2.accept(expVisitor, argu); // Type of the expression to check. Must be boolean.
         if(!eVal.equals("boolean")) {
             throw new Error("Type error");
@@ -107,7 +104,6 @@ public class StatementVisitors extends GJDepthFirst<String, ContextType> {
     */
     public String visit(PrintStatement n, ContextType argu) {
         String _ret=null;
-        ExpressionVisitors expVisitor = new ExpressionVisitors();
         String eVal = n.f2.accept(expVisitor, argu); // Type of the expression to print. Must be int.
         if(!eVal.equals("int")) {
             throw new Error("Type error");
