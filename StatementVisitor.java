@@ -22,9 +22,9 @@ public class StatementVisitor extends GJDepthFirst<String, ContextType> {
      */
     public String visit(AssignmentStatement n, ContextType argu) {
         String _ret = null;
-        String t1 = "CHANGE_ME_LATER"; //TODO: Need ContextType to get type of identifier.
+        String t1 = argu.getTypeEnvType(n.f0.f0.tokenImage); // Gets type of LHS
         String t2 = n.f2.accept(expVisitor, argu); // type of RHS expression
-        if(false) { // CHECK that t2 is a subtype of t2 through ContextType probably?
+        if(!argu.isSubType(t1, t2)) { // CHECK that t2 is a subtype of t1 through ContextType.
             throw new Error("Type error");
         }
         return _ret;
@@ -39,10 +39,13 @@ public class StatementVisitor extends GJDepthFirst<String, ContextType> {
     * f5 -> Expression()
     * f6 -> ";"
     */
-    public String visit(ArrayAssignmentStatement n, ContextType argu) { // TODO: Need ContextType to check identifier.
+    public String visit(ArrayAssignmentStatement n, ContextType argu) { 
         String _ret=null;
-        String idVal = "CHANGE_ME_LATER"; //TODO: Need ContextType to get type of identifier. Must be of type int[].
-        
+        String idVal = argu.getTypeEnvType(n.f0.f0.tokenImage); // Get type of id with respect to the current type environment.
+        if(!idVal.equals("int[]")) {
+            throw new Error("Type error");
+        }
+
         String e1 = n.f2.accept(expVisitor, argu); // Type of array indexing expression. Must be int.
         if(!e1.equals("int")) {
             throw new Error("Type error");
