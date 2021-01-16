@@ -225,10 +225,6 @@ public class ExpressionVisitors extends GJDepthFirst<String,ContextType> {
         n.f0.accept(this, argu);
         _ret = n.f1.accept(this, argu);
         n.f2.accept(this, argu);
-        if(!_ret.equals("boolean"))
-        {
-            throw new Error("Type error");
-        }
         return _ret;
      }
 
