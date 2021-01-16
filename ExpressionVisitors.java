@@ -91,7 +91,6 @@ public class ExpressionVisitors extends GJDepthFirst<String,ContextType> {
     * f2 -> "length"
     */
      public String visit(ArrayLength n, ContextType argu) {
-        String _ret = null;
         String ptype = n.f0.accept(this, argu);
         if(!ptype.equals("int[]")) {
             throw new Error("Type error");
@@ -159,7 +158,6 @@ public class ExpressionVisitors extends GJDepthFirst<String,ContextType> {
     * f0 -> "this"
     */
     public String visit(ThisExpression n) {
-
         String _ret = null;
         //String t1 = n.f0.accept(this);
         return _ret;
@@ -172,8 +170,7 @@ public class ExpressionVisitors extends GJDepthFirst<String,ContextType> {
     * f4 -> "]"
     */
      public String visit(ArrayAllocationExpression n, ContextType argu) {
-
-        String Atype = n.f3.visit(this, argu);
+        String Atype = n.f3.accept(this, argu);
         if(!Atype.equals("int")) {
             throw new Error("Type error");
         }
