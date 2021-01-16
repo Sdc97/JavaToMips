@@ -3,15 +3,25 @@ import java.util.Map;
 
 public class ContextType {
 
+    public static String mainClass;
+    public String currclass;
+
     // HashMap that maps a class name to its parent. If a class has no parent it will map to the empty string "".
     private static Map<String,String> class_parents = new HashMap<>();
+    private static Map<String,Map<String,MethodDescriptor>> class_to_methods = new HashMap<>();
 
     public String getTypeEnvType(String id) {
         return ""; // TODO: Implement type environments and retrieve the specified id val.
     }
 
-    public boolean inCurrentDomain(String id) {
-        return true; // TODO: implement domain function to check if an identifier exists within a classes domain.
+    public MethodDescriptor methodtype(String classname, String methodname) {
+
+        // If the primary map doesnt contain the classname throw error, or if submap doesnt contain method throw error.
+        if(!class_to_methods.containsKey(classname) || !class_to_methods.get(classname).containsKey(methodname)) { 
+            throw new Error("Type error");
+        }
+
+        return class_to_methods.get(classname).get(methodname); // Return the proper MethodDescriptor (Must be constructed elsewhere.)
     }
 
     /**
