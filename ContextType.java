@@ -10,6 +10,10 @@ public class ContextType {
         return ""; // TODO: Implement type environments and retrieve the specified id val.
     }
 
+    public boolean inCurrentDomain(String id) {
+        return true; // TODO: implement domain function to check if an identifier exists within a classes domain.
+    }
+
     /**
      * Returns true if t2 is a subtype of t1, false otherwise.
      * @param t1
@@ -30,7 +34,7 @@ public class ContextType {
         }
 
         String currtype = class_parents.get(t2); // Get parent class of t2, if it exists. Will be empty string if it does not exist.
-        while(!currtype.equals("")) { // run through parents of 
+        while(!currtype.equals("")) { // run through parents of t2, until match or cannot find t1.
             if(currtype.equals(t1)) {
                 return true;
             }
