@@ -56,4 +56,8 @@ public class ContextType {
     public void addClassParent(String child, String parent) {
         class_parents.put(child, parent);
     }
+
+    public void addClassMethodMap(String classname, Map<String,MethodDescriptor> methodmap) {
+        class_to_methods.put(classname, methodmap);
+    }
 }
