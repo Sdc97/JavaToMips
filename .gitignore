@@ -6,3 +6,5 @@
 !Typecheck.java
 !ExpressionVisitors.java
 !ContextType.java
+!StatementVisitor.java
+!MethodDescriptor.java

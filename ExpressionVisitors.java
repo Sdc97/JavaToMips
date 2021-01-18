@@ -1,4 +1,8 @@
 import visitor.GJDepthFirst;
+
+import java.util.List;
+import java.util.Vector;
+
 import syntaxtree.*;
 
 public class ExpressionVisitors extends GJDepthFirst<String,ContextType> {
@@ -97,9 +101,32 @@ public class ExpressionVisitors extends GJDepthFirst<String,ContextType> {
         }
         return "int";
      }
-     /*
-      TODO: #35
-     */
+    /**
+    * f0 -> PrimaryExpression()
+    * f1 -> "."
+    * f2 -> Identifier()
+    * f3 -> "("
+    * f4 -> ( ExpressionList() )?
+    * f5 -> ")"
+    */
+   public String visit(MessageSend n, ContextType argu) {
+      ListVisitor arggetter = new ListVisitor(); // Declare ListVisitor to get the list of argument types.
+      String p = n.f0.accept(this, argu); // Get type of primary expression.
+      String id = n.f2.accept(this, argu); // Get identifier of class method to call.
+      MethodDescriptor m = argu.methodtype(p, id); // Get a MethodDescriptor object of the method specified. Throws error if it cannot find p or the method.
+      List<String> argtypes = n.f4.accept(arggetter, argu); // Retrieve the list of args given
+      
+      if(m.argument_types.size() != argtypes.size()) { // If the sizes dont match then we obviously have a type error.
+         throw new Error("Type error");
+      }
+
+      for(int i = 0; i < m.argument_types.size(); i++) { // Check the list of given against the list of types in the method, if any mismatch throw error.
+         if(!m.argument_types.get(i).equals(argtypes.get(i))) {
+            throw new Error("Type error");
+         }
+      }
+      return m.return_type;
+   }
 
      /**
     * f0 -> IntegerLiteral()
@@ -122,7 +149,7 @@ public class ExpressionVisitors extends GJDepthFirst<String,ContextType> {
      /**
     * f0 -> <INTEGER_LITERAL>
     */
-     public String visit(IntegerLiteral n) {
+     public String visit(IntegerLiteral n, ContextType argu) {
 
         String _ret = "int";
         return _ret;
@@ -130,7 +157,7 @@ public class ExpressionVisitors extends GJDepthFirst<String,ContextType> {
      /**
     * f0 -> "true"
     */
-     public String visit(TrueLiteral n) {
+     public String visit(TrueLiteral n, ContextType argu) {
 
         String _ret = "boolean";
         return _ret;
@@ -138,28 +165,27 @@ public class ExpressionVisitors extends GJDepthFirst<String,ContextType> {
      /**
     * f0 -> "false"
     */
-     public String visit(FalseLiteral n) {
+     public String visit(FalseLiteral n, ContextType argu) {
 
         String _ret = "boolean";
         return _ret;
      }
-     //TODO #39
      /**
     * f0 -> <IDENTIFIER>
     */
-     public String visit(Identifier n) {
+     public String visit(Identifier n, ContextType argu) {
 
-        String _ret = null;
-        //String t1 = n.f0.accept(this);
+        String _ret = argu.getTypeEnvType(n.f0.tokenImage); // Gets the type of the identifier, throws if not in domain.
         return _ret;
      }
-     //TODO #40
      /**
     * f0 -> "this"
     */
-    public String visit(ThisExpression n) {
-        String _ret = null;
-        //String t1 = n.f0.accept(this);
+    public String visit(ThisExpression n, ContextType argu) {
+        String _ret = argu.currclass;
+        if(argu.currclass.equals(ContextType.mainClass)) { // If the current class is the main class, we cannot use "this".
+            throw new Error("Type error");
+        }
         return _ret;
      }
      /**
@@ -176,18 +202,14 @@ public class ExpressionVisitors extends GJDepthFirst<String,ContextType> {
         }
         return "int[]";
      }
-     //TODO #42
      /**
     * f0 -> "new"
     * f1 -> Identifier()
     * f2 -> "("
     * f3 -> ")"
     */
-     public String visit(AllocationExpression n) {
-
-        String _ret = null;
-        //String t1 = n.f0.accept(this);
-        return _ret;
+     public String visit(AllocationExpression n, ContextType argu) {
+        return n.f1.f0.tokenImage; // Simply returnin the type of the class we are creating.
      }
      /**
     * f0 -> "!"
@@ -210,4 +232,30 @@ public class ExpressionVisitors extends GJDepthFirst<String,ContextType> {
         return n.f1.accept(this, argu);
      }
 
+}
+
+
+class ListVisitor extends GJDepthFirst<List<String>,ContextType> {
+      private List<String> temp = new Vector<String>(); // List of argument types, in order left to right.
+      private ExpressionVisitors getCurrent = new ExpressionVisitors(); // Visitor for getting individual argument types, from the class above.
+   /**
+    * f0 -> Expression()
+    * f1 -> ( ExpressionRest() )*
+    */
+    public List<String> visit(ExpressionList n, ContextType argu) {
+      String toAdd = n.f0.accept(getCurrent, argu);
+      temp.add(toAdd);
+      n.f1.accept(this, argu);
+      return temp;
+   }
+
+   /**
+    * f0 -> ","
+    * f1 -> Expression()
+    */
+    public List<String> visit(ExpressionRest n, ContextType argu) {
+      String toAdd = n.f1.accept(getCurrent, argu);
+      temp.add(toAdd);
+      return null; // dont use the return value of these, since the object contains the list of argument types, in order.
+   }
 }
