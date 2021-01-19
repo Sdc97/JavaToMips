@@ -1,17 +1,41 @@
-import java.util.HashMap;
-import java.util.Map;
+import java.util.*;
 
 public class ContextType {
 
     public static String mainClass;
+
+
     public String currclass;
+    public Map<String,String> methodField;
+    public Map<String,String> methodArgField;
+    public static Map<String,Map<String,String>> classVarField = new HashMap<>();
 
     // HashMap that maps a class name to its parent. If a class has no parent it will map to the empty string "".
-    private static Map<String,String> class_parents = new HashMap<>();
-    private static Map<String,Map<String,MethodDescriptor>> class_to_methods = new HashMap<>();
+    public static Map<String,String> class_parents = new HashMap<>();
+    public static Map<String,Map<String,MethodDescriptor>> class_to_methods = new HashMap<>();
 
     public String getTypeEnvType(String id) {
-        return ""; // TODO: Implement type environments and retrieve the specified id val.
+        if(methodField.containsKey(id)) {
+            return methodField.get(id);
+        }
+        if(methodArgField.equals(null)) { // Main class will hit this if it cannot find it in methodfield.
+            throw new Error("Type error");
+        }
+        if(methodArgField.containsKey(id)) {
+            return methodArgField.get(id);
+        }
+
+        String checkclass = currclass;
+        Map<String,String> currmap;
+        while(!checkclass.equals("")) { // run through fields(C)
+            currmap = classVarField.get(checkclass);
+            if(currmap.containsKey(id)) {
+                return currmap.get(id);
+            }
+            checkclass = class_parents.get(checkclass);
+        }
+
+        throw new Error("Type error"); // Usage of undefined variable.
     }
 
     public MethodDescriptor methodtype(String classname, String methodname) {
@@ -59,5 +83,16 @@ public class ContextType {
 
     public void addClassMethodMap(String classname, Map<String,MethodDescriptor> methodmap) {
         class_to_methods.put(classname, methodmap);
+    }
+
+    // Check if all strings in a list are distinct
+    public static boolean distinct(List<String> t) {
+        for (int i = 0; i < t.size(); i++) {
+            for (int j = i + 1; j < t.size(); j++) {
+                if (t.get(i).equals(t.get(j)))
+                    return false;
+            }
+        }
+        return true;
     }
 }

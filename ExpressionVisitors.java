@@ -6,6 +6,23 @@ import java.util.Vector;
 import syntaxtree.*;
 
 public class ExpressionVisitors extends GJDepthFirst<String,ContextType> {
+
+   /**
+    * f0 -> AndExpression()
+    *       | CompareExpression()
+    *       | PlusExpression()
+    *       | MinusExpression()
+    *       | TimesExpression()
+    *       | ArrayLookup()
+    *       | ArrayLength()
+    *       | MessageSend()
+    *       | PrimaryExpression()
+    */
+    public String visit(Expression n, ContextType argu) {
+      String _ret=n.f0.accept(this, argu);
+      return _ret;
+   }
+
     /**
     * f0 -> PrimaryExpression()
     * f1 -> "&&"
