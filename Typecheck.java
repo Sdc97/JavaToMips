@@ -10,8 +10,8 @@ public class Typecheck {
             mainnode.accept(temp, null);
             System.out.println("Program type checked successfully");
         } catch (Throwable e) {
-            //System.out.println("Syntax check failed: " + e.getMessage());
             System.out.println(e.getMessage());
+            System.exit(1);
         }
     }
 }

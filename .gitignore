@@ -3,8 +3,11 @@
 *.jar
 *.jj
 *.json
+*.jav
 !Typecheck.java
 !ExpressionVisitors.java
 !ContextType.java
 !StatementVisitor.java
 !MethodDescriptor.java
+!UpperLevelVisitor.java
+

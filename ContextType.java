@@ -18,7 +18,7 @@ public class ContextType {
         if(methodField.containsKey(id)) {
             return methodField.get(id);
         }
-        if(methodArgField.equals(null)) { // Main class will hit this if it cannot find it in methodfield.
+        if(methodArgField == null) { // Main class will hit this if it cannot find it in methodfield.
             throw new Error("Type error");
         }
         if(methodArgField.containsKey(id)) {
@@ -85,14 +85,30 @@ public class ContextType {
         class_to_methods.put(classname, methodmap);
     }
 
-    // Check if all strings in a list are distinct
-    public static boolean distinct(List<String> t) {
-        for (int i = 0; i < t.size(); i++) {
-            for (int j = i + 1; j < t.size(); j++) {
-                if (t.get(i).equals(t.get(j)))
-                    return false;
+    public static void noOverloading(String classname, String parentname, String methodname) {
+        if(class_to_methods.containsKey(parentname)) { // check to make sure parent class exits, else throw error.
+            if(class_to_methods.get(parentname).containsKey(methodname)) { // See if parent class has method with the same name, else do nothing.
+                MethodDescriptor first = class_to_methods.get(parentname).get(methodname);
+                MethodDescriptor second = class_to_methods.get(classname).get(methodname);
+
+                if(!first.return_type.equals(second.return_type)) { // Return types must be equal.
+                    throw new Error("Type error");
+                }
+
+                if(first.argument_types.size() != second.argument_types.size()) { // Parameter list sizes must be the same
+                    throw new Error("Type error");
+                }
+
+                for(int i = 0; i < first.argument_types.size(); i++) { // All argument types must be equal.
+                    if(!first.argument_types.get(i).equals(second.argument_types.get(i))) { 
+                        throw new Error("Type error"); 
+                    }
+                }
+                // Potential bug here, need to make sure identifiers are the same as well i think. TODO
             }
+        } else {
+            throw new Error("Type error");
         }
-        return true;
     }
+    
 }

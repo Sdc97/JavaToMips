@@ -45,7 +45,7 @@ public class ExpressionVisitors extends GJDepthFirst<String,ContextType> {
         String p1 = n.f0.accept(this, argu);
         String p2 = n.f2.accept(this, argu);
         if(p1.equals("int") && p1.equals(p2)) {
-            return p1;
+            return "boolean";
         }
         throw new Error("Type error");
      }
@@ -129,16 +129,16 @@ public class ExpressionVisitors extends GJDepthFirst<String,ContextType> {
    public String visit(MessageSend n, ContextType argu) {
       ListVisitor arggetter = new ListVisitor(); // Declare ListVisitor to get the list of argument types.
       String p = n.f0.accept(this, argu); // Get type of primary expression.
-      String id = n.f2.accept(this, argu); // Get identifier of class method to call.
+      String id = n.f2.f0.tokenImage; // Get identifier of class method to call.
       MethodDescriptor m = argu.methodtype(p, id); // Get a MethodDescriptor object of the method specified. Throws error if it cannot find p or the method.
       List<String> argtypes = n.f4.accept(arggetter, argu); // Retrieve the list of args given
-      
+
       if(m.argument_types.size() != argtypes.size()) { // If the sizes dont match then we obviously have a type error.
          throw new Error("Type error");
       }
 
       for(int i = 0; i < m.argument_types.size(); i++) { // Check the list of given against the list of types in the method, if any mismatch throw error.
-         if(!m.argument_types.get(i).equals(argtypes.get(i))) {
+         if(!argu.isSubType(m.argument_types.get(i), argtypes.get(i))) {
             throw new Error("Type error");
          }
       }
@@ -255,6 +255,14 @@ public class ExpressionVisitors extends GJDepthFirst<String,ContextType> {
 class ListVisitor extends GJDepthFirst<List<String>,ContextType> {
       private List<String> temp = new Vector<String>(); // List of argument types, in order left to right.
       private ExpressionVisitors getCurrent = new ExpressionVisitors(); // Visitor for getting individual argument types, from the class above.
+
+      public List<String> visit(NodeOptional n, ContextType argu) {
+         if ( n.present() )
+            return n.node.accept(this,argu);
+         else
+            return temp;
+      }
+
    /**
     * f0 -> Expression()
     * f1 -> ( ExpressionRest() )*
