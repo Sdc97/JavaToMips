@@ -1,4 +1,5 @@
 import syntaxtree.*;
+import java.util.*;
 import visitor.GJDepthFirst;
 
 public class StatementVisitor extends GJDepthFirst<String, ContextType> {
@@ -108,6 +109,7 @@ public class StatementVisitor extends GJDepthFirst<String, ContextType> {
     public String visit(PrintStatement n, ContextType argu) {
         String _ret=null;
         String eVal = n.f2.accept(expVisitor, argu); // Type of the expression to print. Must be int.
+
         if(!eVal.equals("int")) {
             throw new Error("Type error");
         }

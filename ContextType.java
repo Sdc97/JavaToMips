@@ -1,17 +1,41 @@
-import java.util.HashMap;
-import java.util.Map;
+import java.util.*;
 
 public class ContextType {
 
     public static String mainClass;
+
+
     public String currclass;
+    public Map<String,String> methodField;
+    public Map<String,String> methodArgField;
+    public static Map<String,Map<String,String>> classVarField = new HashMap<>();
 
     // HashMap that maps a class name to its parent. If a class has no parent it will map to the empty string "".
-    private static Map<String,String> class_parents = new HashMap<>();
-    private static Map<String,Map<String,MethodDescriptor>> class_to_methods = new HashMap<>();
+    public static Map<String,String> class_parents = new HashMap<>();
+    public static Map<String,Map<String,MethodDescriptor>> class_to_methods = new HashMap<>();
 
     public String getTypeEnvType(String id) {
-        return ""; // TODO: Implement type environments and retrieve the specified id val.
+        if(methodField.containsKey(id)) {
+            return methodField.get(id);
+        }
+        if(methodArgField == null) { // Main class will hit this if it cannot find it in methodfield.
+            throw new Error("Type error");
+        }
+        if(methodArgField.containsKey(id)) {
+            return methodArgField.get(id);
+        }
+
+        String checkclass = currclass;
+        Map<String,String> currmap;
+        while(!checkclass.equals("")) { // run through fields(C)
+            currmap = classVarField.get(checkclass);
+            if(currmap.containsKey(id)) {
+                return currmap.get(id);
+            }
+            checkclass = class_parents.get(checkclass);
+        }
+
+        throw new Error("Type error"); // Usage of undefined variable.
     }
 
     public MethodDescriptor methodtype(String classname, String methodname) {
@@ -60,4 +84,31 @@ public class ContextType {
     public void addClassMethodMap(String classname, Map<String,MethodDescriptor> methodmap) {
         class_to_methods.put(classname, methodmap);
     }
+
+    public static void noOverloading(String classname, String parentname, String methodname) {
+        if(class_to_methods.containsKey(parentname)) { // check to make sure parent class exits, else throw error.
+            if(class_to_methods.get(parentname).containsKey(methodname)) { // See if parent class has method with the same name, else do nothing.
+                MethodDescriptor first = class_to_methods.get(parentname).get(methodname);
+                MethodDescriptor second = class_to_methods.get(classname).get(methodname);
+
+                if(!first.return_type.equals(second.return_type)) { // Return types must be equal.
+                    throw new Error("Type error");
+                }
+
+                if(first.argument_types.size() != second.argument_types.size()) { // Parameter list sizes must be the same
+                    throw new Error("Type error");
+                }
+
+                for(int i = 0; i < first.argument_types.size(); i++) { // All argument types must be equal.
+                    if(!first.argument_types.get(i).equals(second.argument_types.get(i))) { 
+                        throw new Error("Type error"); 
+                    }
+                }
+                // Potential bug here, need to make sure identifiers are the same as well i think. TODO
+            }
+        } else {
+            throw new Error("Type error");
+        }
+    }
+    
 }
