@@ -19,6 +19,20 @@ public class UpperLevelVisitor extends GJVoidDepthFirst<ContextType>{
     }
 
     /**
+    * f0 -> Type()
+    * f1 -> Identifier()
+    * f2 -> ";"
+    */
+   public void visit(VarDeclaration n, ContextType argu) {
+
+    String typestr = n.f0.accept(new TypeEnvCreator(), argu);
+    if(!typestr.equals("int") && !typestr.equals("int[]") && !typestr.equals("boolean") && !ContextType.class_parents.containsKey(typestr))
+    {
+        throw new Error("Type error");
+    }
+ }
+
+    /**
     * f0 -> "class"
     * f1 -> Identifier()
     * f2 -> "{"
@@ -49,6 +63,8 @@ public class UpperLevelVisitor extends GJVoidDepthFirst<ContextType>{
         StatementVisitor passthrough = new StatementVisitor();
         n.f15.accept(passthrough, mcCopy);
 
+        n.f14.accept(this, mcCopy);
+
     }
 
     /**
@@ -63,10 +79,9 @@ public class UpperLevelVisitor extends GJVoidDepthFirst<ContextType>{
         ContextType tmp = new ContextType();
         tmp.currclass = n.f1.f0.tokenImage; // Store current class.
 
-        // Possibly might need to do a check here to ensure all of the declared types exist. TODO
-
         //Distinctness is checked while building class type environments and MethodDescriptors. (19)
         n.f4.accept(this, tmp); // Type check internal methods (19)
+        n.f3.accept(this,tmp);
     }
 
     /**
@@ -90,6 +105,7 @@ public class UpperLevelVisitor extends GJVoidDepthFirst<ContextType>{
         }
 
         n.f6.accept(this, tmp); // Type check internal methods (20)
+        n.f5.accept(this,tmp);
     }
 
     /**
@@ -129,6 +145,7 @@ public class UpperLevelVisitor extends GJVoidDepthFirst<ContextType>{
         if(!rettype.equals(actualtype)) { // If type of return expression doesnt match method type, throw error.
             throw new Error("Type error");
         }
+        n.f7.accept(this,currmethod);
     }
 
     /**
