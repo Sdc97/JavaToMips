@@ -10,4 +10,6 @@
 !StatementVisitor.java
 !MethodDescriptor.java
 !UpperLevelVisitor.java
+!J2V.java
+!Operations.java
 .DS_Store
