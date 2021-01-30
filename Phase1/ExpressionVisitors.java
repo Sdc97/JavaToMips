@@ -226,7 +226,12 @@ public class ExpressionVisitors extends GJDepthFirst<String,ContextType> {
     * f3 -> ")"
     */
      public String visit(AllocationExpression n, ContextType argu) {
-        return n.f1.f0.tokenImage; // Simply returnin the type of the class we are creating.
+         String id = n.f1.f0.tokenImage;
+         if(!ContextType.class_parents.containsKey(id))
+         {
+            throw new Error("Type error");
+         } 
+         return n.f1.f0.tokenImage; // Simply returnin the type of the class we are creating.
      }
      /**
     * f0 -> "!"
