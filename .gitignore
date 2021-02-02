@@ -10,3 +10,4 @@ MiniJavaParserTokenManager.java
 ParseException.java
 Token.java
 TokenMgrError.java
+.DS_Store
