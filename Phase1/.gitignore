@@ -1,0 +1,5 @@
+phase1-tests/*
+syntaxtree/*
+visitor/*
+ContextTests.java
+ExpressionVisitorsTests.java
