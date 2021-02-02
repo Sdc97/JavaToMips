@@ -14,6 +14,8 @@ Our design focused around a single class, ContextType, which held all of our con
 
 All of the helper functions and type environment details were handled behind the scenes by ContextType, except for the existence of MethodDescriptors, which were created to represent a method inside any given class. The MethodDescriptor class was small, only holding space for its return type and types of its parameters in order, used for handling method calls in expressions and noOverloading while type checking class declarations.
 
+![alt text](https://github.com/Sdc97/JavaToMips/blob/master/Phase1/img/hw1_uml.png?raw=true)
+
 ## Testing and Verification
 
 Tests were written using pre filled out data structures in ContextClass to perform the type checking for lower level statements and expressions, as well as test the helper methods in ContextType itself to ensure behavior was what we expected. We ran our program with the phase 1 tester provided and were able to pass all of the test cases. Along with that, we also wrote a few of our own test cases for all of the edge cases we could think of, including declaring variables of nonexisting types, and overloading with different return types.
