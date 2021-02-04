@@ -157,6 +157,26 @@ class CodeIdGenerator extends GJDepthFirst<CodeIdContainer,ContextType> {
     }
 
     /**
+    * f0 -> PrimaryExpression()
+    * f1 -> "."
+    * f2 -> "length"
+    */
+   public CodeIdContainer visit(ArrayLength n, ContextType argu) {
+        CodeIdContainer left = n.f0.accept(this, argu);
+        CodeIdContainer result = new CodeIdContainer();
+        //String t1 = argu.newTemp(); // size of the array
+        String nulllabel = argu.newNullLabel();
+        result.code = left.code 
+        + argu.getTabs() + "if " + left.id + " goto :" + nulllabel + "\n"
+        + argu.getTabs() + "\t" +Operations.Error() + "\n"
+        + argu.getTabs() + nulllabel + ":" + "\n";
+
+        result.id = "[" + left.id + "]";
+    return result;
+    }
+
+
+    /**
     * f0 -> IntegerLiteral()
     *       | TrueLiteral()
     *       | FalseLiteral()
@@ -170,6 +190,66 @@ class CodeIdGenerator extends GJDepthFirst<CodeIdContainer,ContextType> {
     public CodeIdContainer visit(PrimaryExpression n, ContextType argu) {
         return n.f0.accept(this, argu);
     }
+
+    /**
+    * f0 -> <INTEGER_LITERAL>
+    */
+   public CodeIdContainer visit(IntegerLiteral n, ContextType argu) {
+    CodeIdContainer result = new CodeIdContainer();
+    result.id = n.f0.tokenImage;
+    return result;
+    }
+
+    /**
+    * f0 -> "true"
+    */
+   public CodeIdContainer visit(TrueLiteral n, ContextType argu) {
+    CodeIdContainer result = new CodeIdContainer();
+    result.id = "1";
+    return result;
+    }
+
+    /**
+    * f0 -> "false"
+    */
+   public CodeIdContainer visit(FalseLiteral n, ContextType argu) {
+    CodeIdContainer result = new CodeIdContainer();
+    result.id = "0";
+    return result;
+    }
+
+    /**
+    * f0 -> <IDENTIFIER>
+    */
+   public CodeIdContainer visit(Identifier n, ContextType argu) {
+    CodeIdContainer result = new CodeIdContainer();
+    //String getType = argu.getTypeEnvType(n.f0.tokenImage);
+    if(argu.localIdent(n.f0.tokenImage))
+    {
+        result.id = n.f0.tokenImage;
+    }
+    return result;
+    }
+
+    /**
+    * f0 -> "this"
+    */
+   public CodeIdContainer visit(ThisExpression n, ContextType argu) {
+    CodeIdContainer result = new CodeIdContainer();
+    result.id = n.f0.tokenImage;
+    result.code = argu.currclass;
+    return result;
+    }
+
+    /**
+    * f0 -> "("
+    * f1 -> Expression()
+    * f2 -> ")"
+    */
+    public CodeIdContainer visit(BracketExpression n, ContextType argu) {
+        return n.f1.accept(this, argu);
+     }
+
 
 
 }

@@ -132,5 +132,10 @@ public class ContextType {
     public String newBoundsLabel() {
         return "";
     }
+
+    public boolean localIdent(String identifier){
+
+        return true; //return true or false to check for it is local identifier or not
+    }
     
 }
