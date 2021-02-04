@@ -2,11 +2,8 @@ import java.util.*;
 
 public class ContextType {
 
-<<<<<<< HEAD
-=======
     public int tabs; // used for printing.
 
->>>>>>> origin/haydenstatement
     public static String mainClass;
 
 
@@ -19,10 +16,6 @@ public class ContextType {
     public static Map<String,String> class_parents = new HashMap<>();
     public static Map<String,Map<String,MethodDescriptor>> class_to_methods = new HashMap<>();
 
-<<<<<<< HEAD
-=======
-
->>>>>>> origin/haydenstatement
     public String getTypeEnvType(String id) {
         if(methodField.containsKey(id)) {
             return methodField.get(id);
@@ -113,17 +106,11 @@ public class ContextType {
                         throw new Error("Type error"); 
                     }
                 }
-<<<<<<< HEAD
-                // Potential bug here, need to make sure identifiers are the same as well i think. TODO
-=======
->>>>>>> origin/haydenstatement
             }
         } else {
             throw new Error("Type error");
         }
     }
-<<<<<<< HEAD
-=======
 
     public String getTabs() {
         return ""; // TODO add the int tabs for each ContextType, implement this method
@@ -149,6 +136,5 @@ public class ContextType {
 
         return true; //return true or false to check for it is local identifier or not
     }
->>>>>>> origin/haydenstatement
     
 }
