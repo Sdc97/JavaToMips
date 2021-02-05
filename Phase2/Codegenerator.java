@@ -1,7 +1,7 @@
 
-
 import visitor.GJDepthFirst;
 
+import java.util.Enumeration;
 import java.util.List;
 import java.util.Vector;
 
@@ -9,6 +9,85 @@ import syntaxtree.*;
 
 public class Codegenerator extends GJDepthFirst <String, ContextType> {
 
+    
+    /**
+    * f0 -> ArrayType()
+    *       | BooleanType()
+    *       | IntegerType()
+    *       | Identifier()
+    */
+   public String visit(Type n, ContextType argu) {
+    String _ret = n.f0.accept(this, argu);
+    return _ret;
+    }
+
+    /**
+     * f0 -> "int"
+    * f1 -> "["
+    * f2 -> "]"
+    */
+    public String visit(ArrayType n, ContextType argu) {
+        String _ret=null;
+        n.f0.accept(this, argu);
+        n.f1.accept(this, argu);
+        n.f2.accept(this, argu);
+        return _ret;
+    }
+
+    /**
+     * f0 -> "boolean"
+    */
+    public String visit(BooleanType n, ContextType argu) {
+        String _ret=null;
+        n.f0.accept(this, argu);
+        return _ret;
+    }
+
+    /**
+     * f0 -> "int"
+    */
+    public String visit(IntegerType n, ContextType argu) {
+        String _ret=null;
+        n.f0.accept(this, argu);
+        return _ret;
+    }
+
+    /**
+    * f0 -> Block()
+    *       | AssignmentStatement()
+    *       | ArrayAssignmentStatement()
+    *       | IfStatement()
+    *       | WhileStatement()
+    *       | PrintStatement()
+    */
+    public String visit(Statement n, ContextType argu) {
+        return n.f0.accept(this, argu);
+    }
+
+    /**
+    * f0 -> "{"
+    * f1 -> ( Statement() )*
+    * f2 -> "}"
+    */
+    public String visit(Block n, ContextType argu) {
+        return n.f1.accept(this, argu);
+    }
+
+    // Need this for the above method.
+    public String visit(NodeListOptional n, ContextType argu) {
+        if ( n.present() ) {
+        String _ret= "";
+        int _count=0;
+        for ( Enumeration<Node> e = n.elements(); e.hasMoreElements(); ) {
+            _ret += e.nextElement().accept(this,argu);
+            _count++;
+        }
+        return _ret;
+        }
+        else
+        return "";
+    }
+    
     /**
     * f0 -> Identifier()
     * f1 -> "="
@@ -16,13 +95,119 @@ public class Codegenerator extends GJDepthFirst <String, ContextType> {
     * f3 -> ";"
     */
     public String visit(AssignmentStatement n, ContextType argu) {
+        CodeIdContainer left = n.f0.accept(new CodeIdGenerator(), argu);
         CodeIdContainer tmp = n.f2.accept(new CodeIdGenerator(), argu);
         String _ret = "";
         // ADD example
         // tmp.code
         // id = Add(id1 id2)
         _ret += tmp.code  // assume that .code comes indented
-        + argu.getTabs() + n.f0.f0.tokenImage + " = " + tmp.id + "\n"; 
+        + argu.getTabs() + left.id + " = " + tmp.id + "\n"; 
+        return _ret;
+    }
+
+    /**
+    * f0 -> Identifier()
+    * f1 -> "["
+    * f2 -> Expression()
+    * f3 -> "]"
+    * f4 -> "="
+    * f5 -> Expression()
+    * f6 -> ";"
+    */
+    public String visit(ArrayAssignmentStatement n, ContextType argu) {
+        String result = "";
+        String tmp1 = argu.newTemp();
+        String tmp2 = argu.newTemp();
+        String nullLabel = argu.newNullLabel();
+        String boundLabel = argu.newBoundsLabel();
+        CodeIdContainer idval = n.f0.accept(new CodeIdGenerator(), argu); // base address of array
+        CodeIdContainer indexval = n.f2.accept(new CodeIdGenerator(), argu); // id of index value
+        CodeIdContainer rhsExp = n.f5.accept(new CodeIdGenerator(), argu);
+        result += argu.getTabs() + tmp1 + " = " + idval.id + "\n"
+        + argu.getTabs() + "if " + tmp1 + " goto :" + nullLabel + "\n"
+        + argu.getTabs() + "\tError(\"null pointer\")\n"
+        + argu.getTabs() + nullLabel + ":\n"
+        + argu.getTabs() + tmp2 + " = [" + tmp1 + "]\n"
+        + indexval.code
+        + argu.getTabs() + tmp2 + " = " + Operations.Lt(indexval.id, tmp2) + "\n"
+        + argu.getTabs() + "if " + tmp2 + " goto :" + boundLabel +"\n"
+        + argu.getTabs() + "\tError(\"array index out of bounds\")\n"
+        + argu.getTabs() + boundLabel + ":\n"
+        + argu.getTabs() + tmp2 + " = " + Operations.MulS(indexval.id, "4") + "\n"
+        + argu.getTabs() + tmp2 + " = " + Operations.Add(tmp2, tmp1) + "\n"
+        + rhsExp.code
+        + argu.getTabs() + "[" + tmp2 + "+4] = " + rhsExp.id + "\n";
+        return result;
+    }
+
+    /**
+     * f0 -> "if"
+    * f1 -> "("
+    * f2 -> Expression()
+    * f3 -> ")"
+    * f4 -> Statement()
+    * f5 -> "else"
+    * f6 -> Statement()
+    */
+    public String visit(IfStatement n, ContextType argu) {
+        String result = "";
+        CodeIdContainer checkexp = n.f2.accept(new CodeIdGenerator(), argu);
+        String ifelselabel = argu.newIfElseLabel();
+        String ifendlabel = argu.newIfEndLabel();
+        result += checkexp.code
+        + argu.getTabs() + "if0 " + checkexp.id + " goto :" + ifelselabel + "\n";
+        argu.tabs++;
+        String ifstr = n.f4.accept(this, argu);
+        result += ifstr
+        + argu.getTabs() + "goto :" + ifendlabel + "\n";
+        argu.tabs--;
+        result += argu.getTabs() + ifelselabel + ":\n";
+        argu.tabs++;
+        String elsestr = n.f6.accept(this, argu);
+        result += elsestr;
+        argu.tabs--;
+        result += argu.getTabs() + ifendlabel + ":\n";
+        return result;
+    }
+
+    /**
+    * f0 -> "while"
+    * f1 -> "("
+    * f2 -> Expression()
+    * f3 -> ")"
+    * f4 -> Statement()
+    */
+    public String visit(WhileStatement n, ContextType argu) {
+        String result = "";
+        String beginlabel = argu.newWhileBeginLabel();
+        String endlabel = argu.newWhileEndLabel();
+        CodeIdContainer exp = n.f2.accept(new CodeIdGenerator(), argu);
+        result += argu.getTabs() + beginlabel + ":\n"
+        + exp.code
+        + argu.getTabs() + "if0 " + exp.id + " goto :" + endlabel + "\n";
+        argu.tabs++;
+        String stmts = n.f4.accept(this, argu);
+        result += stmts
+        + argu.getTabs() + "goto :" + beginlabel + "\n";
+        argu.tabs--;
+        result += argu.getTabs() + endlabel + ":\n";
+
+        return result;
+    }
+
+    /**
+    * f0 -> "System.out.println"
+    * f1 -> "("
+    * f2 -> Expression()
+    * f3 -> ")"
+    * f4 -> ";"
+    */
+    public String visit(PrintStatement n, ContextType argu) {
+        String _ret= "";
+        CodeIdContainer exp = n.f2.accept(new CodeIdGenerator(), argu);
+        _ret = exp.code
+        + argu.getTabs() + Operations.PrintIntS(exp.id) + "\n";
         return _ret;
     }
     
@@ -55,18 +240,20 @@ class CodeIdGenerator extends GJDepthFirst<CodeIdContainer,ContextType> {
         String elseLable = argu.newLabel();
         String endLable = argu.newLabel();
         result.id = argu.newTemp();
-        result.code = left.code + // assume newline handled inside
-        argu.getTabs() + "if0 " + left.id + " goto :" + elseLable + "\n";
+        String tmp1 = argu.newTemp();
+        result.code = left.code // assume newline handled inside
+        + argu.getTabs() + tmp1 + " = " + left.id + "\n"
+        + argu.getTabs() + "if0 " + tmp1 + " goto :" + elseLable + "\n"; // left.id = Sub(arg1 arg2)
         argu.tabs++;
 
         CodeIdContainer right = n.f2.accept(this, argu);
         result.code += right.code
-        + argu.getTabs() + result.id + "=" + right.id + "\n"
+        + argu.getTabs() + result.id + " = " + right.id + "\n"
         + argu.getTabs() + "goto :" + endLable + "\n";
         argu.tabs--;
         
-        result.code += argu.getTabs() + elseLable + ":" + "\n"
-        + argu.getTabs() + "\t" + right.id + " = " + "0" + "\n"
+        result.code += argu.getTabs() + elseLable + ":\n"
+        + argu.getTabs() + "\t" + result.id + " = 0\n"
         + argu.getTabs() + endLable + ":" + "\n";
 
 
@@ -83,8 +270,9 @@ class CodeIdGenerator extends GJDepthFirst<CodeIdContainer,ContextType> {
         CodeIdContainer left = n.f0.accept(this, argu);
         CodeIdContainer right = n.f2.accept(this, argu);
         CodeIdContainer result = new CodeIdContainer();
-        result.code = left.code + right.code;
-        result.id =  Operations.LtS(left.id, right.id); // LtS(left.id right.id)
+        result.id = argu.newTemp();
+        result.code = left.code + right.code
+        + argu.getTabs() + result.id + " = " + Operations.LtS(left.id, right.id) + "\n";
         return result;
     }
 
@@ -98,8 +286,9 @@ class CodeIdGenerator extends GJDepthFirst<CodeIdContainer,ContextType> {
         CodeIdContainer left = n.f0.accept(this, argu);
         CodeIdContainer right = n.f2.accept(this, argu);
         CodeIdContainer result = new CodeIdContainer();
-        result.code = left.code + right.code;
-        result.id = Operations.Add(left.id, right.id); // Add(left.id right.id)
+        result.id = argu.newTemp();
+        result.code = left.code + right.code
+        + argu.getTabs() + result.id + " = " + Operations.Add(left.id, right.id); // Add(left.id right.id)
         return result;
     }
      /**
@@ -111,8 +300,9 @@ class CodeIdGenerator extends GJDepthFirst<CodeIdContainer,ContextType> {
         CodeIdContainer left = n.f0.accept(this, argu);
         CodeIdContainer right = n.f2.accept(this, argu);
         CodeIdContainer result = new CodeIdContainer();
-        result.code = left.code + right.code;
-        result.id =  Operations.Sub(left.id, right.id); // Sub(left.id right.id)
+        result.id = argu.newTemp();
+        result.code = left.code + right.code
+        + argu.getTabs() + result.id + " = " + Operations.Sub(left.id, right.id); // Sub(left.id right.id)
         return result;
     }
 
@@ -125,8 +315,9 @@ class CodeIdGenerator extends GJDepthFirst<CodeIdContainer,ContextType> {
         CodeIdContainer left = n.f0.accept(this, argu);
         CodeIdContainer right = n.f2.accept(this, argu);
         CodeIdContainer result = new CodeIdContainer();
-        result.code = left.code + right.code;
-        result.id =  Operations.MulS(left.id, right.id); // MulS(left.id right.id)
+        result.id = argu.newTemp();
+        result.code = left.code + right.code
+        + argu.getTabs() + result.id + " = " + Operations.MulS(left.id, right.id); // MulS(left.id right.id)
         return result;
     }
 
@@ -175,6 +366,96 @@ class CodeIdGenerator extends GJDepthFirst<CodeIdContainer,ContextType> {
     return result;
     }
 
+    /**
+    * f0 -> PrimaryExpression()
+    * f1 -> "."
+    * f2 -> Identifier()
+    * f3 -> "("
+    * f4 -> ( ExpressionList() )?
+    * f5 -> ")"
+    */
+    public CodeIdContainer visit(MessageSend n, ContextType argu) {
+        CodeIdContainer result = new CodeIdContainer();
+        CodeIdContainer classToCall = n.f0.accept(this, argu); // base pointer to object in id.
+        CodeIdContainer arguments = n.f4.accept(this, argu); // computed ids of arguments in form "arg1 arg2 arg3 ..."
+        String classType = n.f0.accept(new ExpressionVisitors(), argu); // type of class
+        String tmp = argu.newTemp();
+        result.id = argu.newTemp();
+
+        int methodOffset = ContextType.getMethodOffset(classType, n.f2.f0.tokenImage);
+
+        result.code = classToCall.code + arguments.code;
+
+        if(classToCall.id.equals("this")) {
+            result.code += argu.getTabs() + tmp + " = [this]\n" // tmp points to v-table of object
+            + argu.getTabs() + tmp + " = [" + tmp + "+" + methodOffset + "]\n"
+            + argu.getTabs() + result.id + " = call " + tmp + "(this" + arguments.id + ")\n";
+        } else {
+            String nulllabel = argu.newNullLabel();
+            result.code +=  argu.getTabs() + "if " + classToCall.id + "goto :" + nulllabel + "\n"
+            + argu.getTabs() + "\t" + Operations.Error() + "\n" 
+            + argu.getTabs() + ":" + nulllabel + "\n"
+            + argu.getTabs() + tmp + " = [" + classToCall.id + "]\n" // Sets tmp to base address of v-table
+            + argu.getTabs() + tmp + " = [" + tmp + "+" + methodOffset + "]\n"
+            + argu.getTabs() + result.id + " = call " + tmp + "(" + classToCall.id + arguments.id + ")\n"; 
+        }
+
+        return result;
+    }
+
+    public CodeIdContainer visit(NodeOptional n, ContextType argu) {
+        if ( n.present() )
+            return n.node.accept(this,argu);
+        else
+            return new CodeIdContainer();
+    }
+
+    /**
+    * f0 -> Expression()
+    * f1 -> ( ExpressionRest() )*
+    */
+    public CodeIdContainer visit(ExpressionList n, ContextType argu) {
+        CodeIdContainer result = new CodeIdContainer();
+        CodeIdContainer left = n.f0.accept(this, argu);
+        CodeIdContainer right = n.f1.accept(this, argu);
+        String tmp = argu.newTemp();
+        
+        result.code = left.code + right.code
+        + argu.getTabs() + tmp + " = " + left.id + "\n";
+        
+        result.id = " " + tmp + right.id;
+        return result;
+    }
+
+    public CodeIdContainer visit(NodeListOptional n, ContextType argu) {
+        if ( n.present() ) {
+        CodeIdContainer _ret= new CodeIdContainer();
+        int _count=0;
+        for ( Enumeration<Node> e = n.elements(); e.hasMoreElements(); ) {
+            CodeIdContainer tmp = e.nextElement().accept(this,argu);
+            _ret.code += tmp.code;
+            _ret.id += " " + tmp.id;
+            _count++;
+        }
+        return _ret;
+        }
+        else
+        return new CodeIdContainer();
+    }
+
+    /**
+    * f0 -> ","
+    * f1 -> Expression()
+    */
+    public CodeIdContainer visit(ExpressionRest n, ContextType argu) {
+        CodeIdContainer result = new CodeIdContainer();
+        CodeIdContainer right = n.f1.accept(this, argu);
+        String tmp = argu.newTemp();
+        result.code += right.code
+        + argu.getTabs() + tmp + " = " + right.id + "\n";
+        result.id = tmp;
+        return result;
+    }
 
     /**
     * f0 -> IntegerLiteral()
@@ -224,9 +505,19 @@ class CodeIdGenerator extends GJDepthFirst<CodeIdContainer,ContextType> {
    public CodeIdContainer visit(Identifier n, ContextType argu) {
     CodeIdContainer result = new CodeIdContainer();
     //String getType = argu.getTypeEnvType(n.f0.tokenImage);
-    if(argu.localIdent(n.f0.tokenImage))
+    /* class A {
+            int b;
+            public int Arun(int b) {
+                int b;
+            }
+    */ 
+    result.code = "";
+    if(argu.localIdent(n.f0.tokenImage)) // If identifier is a local var or method parameter
     {
         result.id = n.f0.tokenImage;
+    }
+    else { // else it must be a class parameter
+        result.id = "[this+" + argu.findClassVarOffset(n.f0.tokenImage) +"]";
     }
     return result;
     }
@@ -234,11 +525,53 @@ class CodeIdGenerator extends GJDepthFirst<CodeIdContainer,ContextType> {
     /**
     * f0 -> "this"
     */
-   public CodeIdContainer visit(ThisExpression n, ContextType argu) {
+    public CodeIdContainer visit(ThisExpression n, ContextType argu) {
+        CodeIdContainer result = new CodeIdContainer();
+        result.id = n.f0.tokenImage;
+        return result;
+    }
+
+     /**
+    * f0 -> "new"
+    * f1 -> "int"
+    * f2 -> "["
+    * f3 -> Expression()
+    * f4 -> "]"
+    */
+   public CodeIdContainer visit(ArrayAllocationExpression n, ContextType argu) {
     CodeIdContainer result = new CodeIdContainer();
-    result.id = n.f0.tokenImage;
-    result.code = argu.currclass;
+    CodeIdContainer exp = n.f3.accept(this, argu);
+    result.id = argu.newTemp();
+    result.code = exp.code
+    + argu.getTabs() + result.id + " = call :AllocArray(" + exp.id + ")\n"; // new to have the AllocArray function at the bottom for this to work!
     return result;
+    }
+
+    /**
+     * f0 -> "new"
+    * f1 -> Identifier()
+    * f2 -> "("
+    * f3 -> ")"
+    */
+    public CodeIdContainer visit(AllocationExpression n, ContextType argu) {
+        CodeIdContainer result = new CodeIdContainer();
+        result.id = argu.newTemp();
+        result.code = argu.getTabs() + result.id + " = " + Operations.HeapAllocZ(ContextType.classVarField.get(n.f1.f0.tokenImage).entrySet().size() + 4) + "\n" // The amount of space needed is size of classVarField key map plus 4
+        + argu.getTabs() + "[" + result.id + "]" + " = :vmt_" + n.f1.f0.tokenImage + "\n"; // Assign v-table to first memory location
+        return result;
+    }
+
+    /**
+     * f0 -> "!"
+    * f1 -> Expression()
+    */
+    public CodeIdContainer visit(NotExpression n, ContextType argu) { // supose !(v1 < v2)
+        CodeIdContainer result = new CodeIdContainer();
+        CodeIdContainer right = n.f1.accept(this, argu);
+        result.id = argu.newTemp();
+        result.code = right.code
+        + argu.getTabs() + result.id + " = " + Operations.Sub("1", right.id) + "\n";
+        return result;
     }
 
     /**
@@ -247,10 +580,16 @@ class CodeIdGenerator extends GJDepthFirst<CodeIdContainer,ContextType> {
     * f2 -> ")"
     */
     public CodeIdContainer visit(BracketExpression n, ContextType argu) {
-        return n.f1.accept(this, argu);
+        /*
+        CodeIdContainer result = new CodeIdContainer();
+        CodeIdContainer right = n.f1.accept(this, argu); // id or temp OR Add(arg1 arg2)
+        String tmp = argu.newTemp();
+        result.code = right.code
+        + argu.getTabs() + tmp + " = " + right.id + "\n";
+        result.id = tmp;
+        */
+        return n.f1.accept(this, argu); // return result? Keeping above code just in case.
      }
-
-
 
 }
 
