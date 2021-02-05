@@ -3,6 +3,8 @@ import java.util.*;
 public class ContextType {
 
     public int tabs; // used for printing.
+    public Map<String,Integer> classVarOffsets; // created during method visitor, MUST BE COPIED OVER ALONGSIDE currclass
+    public static Map<String,Map<String,Integer>> classMethodOffsets = new HashMap<>(); // holds v tables offsets for all method names in class->(method->offset)
 
     public static String mainClass;
 
@@ -134,8 +136,18 @@ public class ContextType {
     }
 
     public boolean localIdent(String identifier){
+        if(methodField.containsKey(identifier) || methodArgField.containsKey(identifier)) {
+            return true;
+        }
+        return false; //return true or false to check for it is local identifier or not
+    }
 
-        return true; //return true or false to check for it is local identifier or not
+    public int findClassVarOffset(String id) {
+        return classVarOffsets.get(id) + 4;
+    }
+
+    public static int getMethodOffset(String className, String methodName) {
+        return classMethodOffsets.get(className).get(methodName);
     }
     
 }

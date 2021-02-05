@@ -44,7 +44,7 @@ public class Operations {
 
     public static String Error()
     {
-        return "Error( \"null pointer\" )";
+        return "Error(\"null pointer\")";
     }
 
 
