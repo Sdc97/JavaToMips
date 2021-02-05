@@ -135,6 +135,22 @@ public class ContextType {
         return "";
     }
 
+    public String newIfElseLabel() {
+        return "";
+    }
+
+    public String newIfEndLabel() {
+        return "";
+    }
+
+    public String newWhileBeginLabel() {
+        return "";
+    }
+
+    public String newWhileEndLabel() {
+        return "";
+    }
+
     public boolean localIdent(String identifier){
         if(methodField.containsKey(identifier) || methodArgField.containsKey(identifier)) {
             return true;

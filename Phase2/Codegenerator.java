@@ -51,6 +51,42 @@ public class Codegenerator extends GJDepthFirst <String, ContextType> {
         n.f0.accept(this, argu);
         return _ret;
     }
+
+    /**
+    * f0 -> Block()
+    *       | AssignmentStatement()
+    *       | ArrayAssignmentStatement()
+    *       | IfStatement()
+    *       | WhileStatement()
+    *       | PrintStatement()
+    */
+    public String visit(Statement n, ContextType argu) {
+        return n.f0.accept(this, argu);
+    }
+
+    /**
+    * f0 -> "{"
+    * f1 -> ( Statement() )*
+    * f2 -> "}"
+    */
+    public String visit(Block n, ContextType argu) {
+        return n.f1.accept(this, argu);
+    }
+
+    // Need this for the above method.
+    public String visit(NodeListOptional n, ContextType argu) {
+        if ( n.present() ) {
+        String _ret= "";
+        int _count=0;
+        for ( Enumeration<Node> e = n.elements(); e.hasMoreElements(); ) {
+            _ret += e.nextElement().accept(this,argu);
+            _count++;
+        }
+        return _ret;
+        }
+        else
+        return "";
+    }
     
     /**
     * f0 -> Identifier()
@@ -68,6 +104,96 @@ public class Codegenerator extends GJDepthFirst <String, ContextType> {
         _ret += tmp.code  // assume that .code comes indented
         + argu.getTabs() + left.id + " = " + tmp.id + "\n"; 
         return _ret;
+    }
+
+    /**
+    * f0 -> Identifier()
+    * f1 -> "["
+    * f2 -> Expression()
+    * f3 -> "]"
+    * f4 -> "="
+    * f5 -> Expression()
+    * f6 -> ";"
+    */
+    public String visit(ArrayAssignmentStatement n, ContextType argu) {
+        String result = "";
+        String tmp1 = argu.newTemp();
+        String tmp2 = argu.newTemp();
+        String nullLabel = argu.newNullLabel();
+        String boundLabel = argu.newBoundsLabel();
+        CodeIdContainer idval = n.f0.accept(new CodeIdGenerator(), argu); // base address of array
+        CodeIdContainer indexval = n.f2.accept(new CodeIdGenerator(), argu); // id of index value
+        CodeIdContainer rhsExp = n.f5.accept(new CodeIdGenerator(), argu);
+        result += argu.getTabs() + tmp1 + " = " + idval.id + "\n"
+        + argu.getTabs() + "if " + tmp1 + " goto :" + nullLabel + "\n"
+        + argu.getTabs() + "\tError(\"null pointer\")\n"
+        + argu.getTabs() + nullLabel + ":\n"
+        + argu.getTabs() + tmp2 + " = [" + tmp1 + "]\n"
+        + indexval.code
+        + argu.getTabs() + tmp2 + " = " + Operations.Lt(indexval.id, tmp2) + "\n"
+        + argu.getTabs() + "if " + tmp2 + " goto :" + boundLabel +"\n"
+        + argu.getTabs() + "\tError(\"array index out of bounds\")\n"
+        + argu.getTabs() + boundLabel + ":\n"
+        + argu.getTabs() + tmp2 + " = " + Operations.MulS(indexval.id, "4") + "\n"
+        + argu.getTabs() + tmp2 + " = " + Operations.Add(tmp2, tmp1) + "\n"
+        + rhsExp.code
+        + argu.getTabs() + "[" + tmp2 + "+4] = " + rhsExp.id + "\n";
+        return result;
+    }
+
+    /**
+     * f0 -> "if"
+    * f1 -> "("
+    * f2 -> Expression()
+    * f3 -> ")"
+    * f4 -> Statement()
+    * f5 -> "else"
+    * f6 -> Statement()
+    */
+    public String visit(IfStatement n, ContextType argu) {
+        String result = "";
+        CodeIdContainer checkexp = n.f2.accept(new CodeIdGenerator(), argu);
+        String ifelselabel = argu.newIfElseLabel();
+        String ifendlabel = argu.newIfEndLabel();
+        result += checkexp.code
+        + argu.getTabs() + "if0 " + checkexp.id + " goto :" + ifelselabel + "\n";
+        argu.tabs++;
+        String ifstr = n.f4.accept(this, argu);
+        result += ifstr
+        + argu.getTabs() + "goto :" + ifendlabel + "\n";
+        argu.tabs--;
+        result += argu.getTabs() + ifelselabel + ":\n";
+        argu.tabs++;
+        String elsestr = n.f6.accept(this, argu);
+        result += elsestr;
+        argu.tabs--;
+        result += argu.getTabs() + ifendlabel + ":\n";
+        return result;
+    }
+
+    /**
+    * f0 -> "while"
+    * f1 -> "("
+    * f2 -> Expression()
+    * f3 -> ")"
+    * f4 -> Statement()
+    */
+    public String visit(WhileStatement n, ContextType argu) {
+        String result = "";
+        String beginlabel = argu.newWhileBeginLabel();
+        String endlabel = argu.newWhileEndLabel();
+        CodeIdContainer exp = n.f2.accept(new CodeIdGenerator(), argu);
+        result += argu.getTabs() + beginlabel + ":\n"
+        + exp.code
+        + argu.getTabs() + "if0 " + exp.id + " goto :" + endlabel + "\n";
+        argu.tabs++;
+        String stmts = n.f4.accept(this, argu);
+        result += stmts
+        + argu.getTabs() + "goto :" + beginlabel + "\n";
+        argu.tabs--;
+        result += argu.getTabs() + endlabel + ":\n";
+
+        return result;
     }
 
     /**
