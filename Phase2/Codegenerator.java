@@ -79,11 +79,9 @@ public class Codegenerator extends GJDepthFirst <String, ContextType> {
     */
     public String visit(PrintStatement n, ContextType argu) {
         String _ret= "";
-        String tmp = argu.newTemp();
         CodeIdContainer exp = n.f2.accept(new CodeIdGenerator(), argu);
         _ret = exp.code
-        + argu.getTabs() + tmp + " = " + exp.id + "\n"
-        + argu.getTabs() + Operations.PrintIntS(tmp) + "\n";
+        + argu.getTabs() + Operations.PrintIntS(exp.id) + "\n";
         return _ret;
     }
     
@@ -146,8 +144,9 @@ class CodeIdGenerator extends GJDepthFirst<CodeIdContainer,ContextType> {
         CodeIdContainer left = n.f0.accept(this, argu);
         CodeIdContainer right = n.f2.accept(this, argu);
         CodeIdContainer result = new CodeIdContainer();
-        result.code = left.code + right.code;
-        result.id =  Operations.LtS(left.id, right.id); // LtS(left.id right.id)
+        result.id = argu.newTemp();
+        result.code = left.code + right.code
+        + argu.getTabs() + result.id + " = " + Operations.LtS(left.id, right.id) + "\n";
         return result;
     }
 
@@ -161,8 +160,9 @@ class CodeIdGenerator extends GJDepthFirst<CodeIdContainer,ContextType> {
         CodeIdContainer left = n.f0.accept(this, argu);
         CodeIdContainer right = n.f2.accept(this, argu);
         CodeIdContainer result = new CodeIdContainer();
-        result.code = left.code + right.code;
-        result.id = Operations.Add(left.id, right.id); // Add(left.id right.id)
+        result.id = argu.newTemp();
+        result.code = left.code + right.code
+        + argu.getTabs() + result.id + " = " + Operations.Add(left.id, right.id); // Add(left.id right.id)
         return result;
     }
      /**
@@ -174,8 +174,9 @@ class CodeIdGenerator extends GJDepthFirst<CodeIdContainer,ContextType> {
         CodeIdContainer left = n.f0.accept(this, argu);
         CodeIdContainer right = n.f2.accept(this, argu);
         CodeIdContainer result = new CodeIdContainer();
-        result.code = left.code + right.code;
-        result.id =  Operations.Sub(left.id, right.id); // Sub(left.id right.id)
+        result.id = argu.newTemp();
+        result.code = left.code + right.code
+        + argu.getTabs() + result.id + " = " + Operations.Sub(left.id, right.id); // Sub(left.id right.id)
         return result;
     }
 
@@ -188,8 +189,9 @@ class CodeIdGenerator extends GJDepthFirst<CodeIdContainer,ContextType> {
         CodeIdContainer left = n.f0.accept(this, argu);
         CodeIdContainer right = n.f2.accept(this, argu);
         CodeIdContainer result = new CodeIdContainer();
-        result.code = left.code + right.code;
-        result.id =  Operations.MulS(left.id, right.id); // MulS(left.id right.id)
+        result.id = argu.newTemp();
+        result.code = left.code + right.code
+        + argu.getTabs() + result.id + " = " + Operations.MulS(left.id, right.id); // MulS(left.id right.id)
         return result;
     }
 
@@ -260,7 +262,7 @@ class CodeIdGenerator extends GJDepthFirst<CodeIdContainer,ContextType> {
 
         if(classToCall.id.equals("this")) {
             result.code += argu.getTabs() + tmp + " = [this]\n" // tmp points to v-table of object
-            + argu.getTabs() + tmp + " = [" + tmp + "+" + methodOffset + "]\n";
+            + argu.getTabs() + tmp + " = [" + tmp + "+" + methodOffset + "]\n"
             + argu.getTabs() + result.id + " = call " + tmp + "(this" + arguments.id + ")\n";
         } else {
             String nulllabel = argu.newNullLabel();
@@ -268,7 +270,7 @@ class CodeIdGenerator extends GJDepthFirst<CodeIdContainer,ContextType> {
             + argu.getTabs() + "\t" + Operations.Error() + "\n" 
             + argu.getTabs() + ":" + nulllabel + "\n"
             + argu.getTabs() + tmp + " = [" + classToCall.id + "]\n" // Sets tmp to base address of v-table
-            + argu.getTabs() + tmp + " = [" + tmp + "+" + methodOffset + "]\n";
+            + argu.getTabs() + tmp + " = [" + tmp + "+" + methodOffset + "]\n"
             + argu.getTabs() + result.id + " = call " + tmp + "(" + classToCall.id + arguments.id + ")\n"; 
         }
 
@@ -410,9 +412,12 @@ class CodeIdGenerator extends GJDepthFirst<CodeIdContainer,ContextType> {
     * f3 -> Expression()
     * f4 -> "]"
     */
-   public CodeIdContainer visit(ArrayAllocationExpression n, ContextType argu) { // TODO
+   public CodeIdContainer visit(ArrayAllocationExpression n, ContextType argu) {
     CodeIdContainer result = new CodeIdContainer();
-    
+    CodeIdContainer exp = n.f3.accept(this, argu);
+    result.id = argu.newTemp();
+    result.code = exp.code
+    + argu.getTabs() + result.id + " = call :AllocArray(" + exp.id + ")\n"; // new to have the AllocArray function at the bottom for this to work!
     return result;
     }
 
