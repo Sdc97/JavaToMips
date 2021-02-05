@@ -8,9 +8,6 @@ public class VTableCreator {
         Map<String,List<List<String>>> vtables = new HashMap<>();
         for(String item: toporder) {
             if(item.equals(ContextType.mainClass)) continue;
-            // parent -> ((A,run), (B,runB))
-            // C has runB
-            // C -> ((A,run), (C,runB))
             String parent = ContextType.class_parents.get(item);
             if(parent.equals("")) { // In this loop classes that have no parent
                 List<List<String>> curr = new Vector<>();
