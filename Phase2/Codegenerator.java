@@ -1,15 +1,163 @@
 
 import visitor.GJDepthFirst;
 
-import java.util.Enumeration;
-import java.util.List;
-import java.util.Vector;
+import java.util.*;
 
 import syntaxtree.*;
 
 public class Codegenerator extends GJDepthFirst <String, ContextType> {
 
-    
+    /**
+    * f0 -> MainClass()
+    * f1 -> ( TypeDeclaration() )*
+    * f2 -> <EOF>
+    */
+    public String visit(Goal n, ContextType argu) {
+        String _ret= n.f0.accept(this, argu) + n.f1.accept(this, argu);
+        _ret += "func AllocArray(size)\n"
+                + "   bytes = MulS(size 4)\n"
+                + "   bytes = Add(bytes 4)\n"
+                + "   v = HeapAllocZ(bytes)\n"
+                + "   [v] = size\n"
+                + "   ret v\n";
+        return _ret; // should also make the array alloc func
+    }
+
+    /**
+     * f0 -> "class"
+    * f1 -> Identifier()
+    * f2 -> "{"
+    * f3 -> "public"
+    * f4 -> "static"
+    * f5 -> "void"
+    * f6 -> "main"
+    * f7 -> "("
+    * f8 -> "String"
+    * f9 -> "["
+    * f10 -> "]"
+    * f11 -> Identifier()
+    * f12 -> ")"
+    * f13 -> "{"
+    * f14 -> ( VarDeclaration() )*
+    * f15 -> ( Statement() )*
+    * f16 -> "}"
+    * f17 -> "}"
+    */
+    public String visit(MainClass n, ContextType argu) {
+        ContextType cc = new ContextType();
+        n.accept(new UpperLevelVisitor(), cc); // handles class type env
+        cc.methodArgField  = new HashMap<>(); // create this so no segfaults
+        String result = "func Main()\n";
+        cc.tabs++;
+        result += n.f15.accept(this, cc)
+        + cc.getTabs() + "ret\n\n";
+        cc.tabs--;
+        return result;
+    }
+
+    /**
+     * f0 -> ClassDeclaration()
+    *       | ClassExtendsDeclaration()
+    */
+    public String visit(TypeDeclaration n, ContextType argu) {
+        return n.f0.accept(this, argu);
+    }
+
+    /**
+     * f0 -> "class"
+    * f1 -> Identifier()
+    * f2 -> "{"
+    * f3 -> ( VarDeclaration() )*
+    * f4 -> ( MethodDeclaration() )*
+    * f5 -> "}"
+    */
+    public String visit(ClassDeclaration n, ContextType argu) {
+        ContextType cc = new ContextType();
+        cc.currclass = n.f1.f0.tokenImage;
+
+        String result = n.f4.accept(this, cc);
+        return result;
+    }
+
+    /**
+     * f0 -> "class"
+    * f1 -> Identifier()
+    * f2 -> "extends"
+    * f3 -> Identifier()
+    * f4 -> "{"
+    * f5 -> ( VarDeclaration() )*
+    * f6 -> ( MethodDeclaration() )*
+    * f7 -> "}"
+    */
+    public String visit(ClassExtendsDeclaration n, ContextType argu) {
+        ContextType cc = new ContextType();
+        cc.currclass = n.f1.f0.tokenImage;
+
+        String result = n.f6.accept(this, cc);
+        return result;
+    }
+
+    /**
+     * f0 -> "public"
+    * f1 -> Type()
+    * f2 -> Identifier()
+    * f3 -> "("
+    * f4 -> ( FormalParameterList() )?
+    * f5 -> ")"
+    * f6 -> "{"
+    * f7 -> ( VarDeclaration() )*
+    * f8 -> ( Statement() )*
+    * f9 -> "return"
+    * f10 -> Expression()
+    * f11 -> ";"
+    * f12 -> "}"
+    */
+    public String visit(MethodDeclaration n, ContextType argu) {
+        ContextType mm = new ContextType();
+        mm.currclass = argu.currclass;
+        
+        n.accept(new UpperLevelVisitor(), mm);
+        String args = n.f4.accept(this, mm); // arguments in the form " arg1 arg2 arg3 ..."
+        if(args == null) args = "";
+        String result = "func " + mm.currclass + "." + n.f2.f0.tokenImage + "(this" + args + ")\n";
+        mm.tabs++; 
+        result += n.f8.accept(this, mm);
+        CodeIdContainer retexp = n.f10.accept(new CodeIdGenerator(), mm);
+        String tmp1 = mm.newTemp();
+        result += retexp.code
+        + mm.getTabs() + tmp1 + " = " + retexp.id + "\n"
+        + mm.getTabs() + "ret " + tmp1 + "\n\n";
+        mm.tabs--;
+
+        return result;
+    }
+
+    /**
+     * f0 -> FormalParameter()
+    * f1 -> ( FormalParameterRest() )*
+    */
+    public String visit(FormalParameterList n, ContextType argu) {
+        String result = n.f0.accept(this, argu) + n.f1.accept(this, argu);
+        return result;
+    }
+
+    /**
+    * f0 -> Type()
+    * f1 -> Identifier()
+    */
+    public String visit(FormalParameter n, ContextType argu) {
+        String result = " " + n.f1.f0.tokenImage;
+        return result;
+    }
+
+    /**
+     * f0 -> ","
+    * f1 -> FormalParameter()
+    */
+    public String visit(FormalParameterRest n, ContextType argu) {
+        return n.f1.accept(this, argu);
+    }
+
     /**
     * f0 -> ArrayType()
     *       | BooleanType()
@@ -126,13 +274,13 @@ public class Codegenerator extends GJDepthFirst <String, ContextType> {
         CodeIdContainer rhsExp = n.f5.accept(new CodeIdGenerator(), argu);
         result += argu.getTabs() + tmp1 + " = " + idval.id + "\n"
         + argu.getTabs() + "if " + tmp1 + " goto :" + nullLabel + "\n"
-        + argu.getTabs() + "\tError(\"null pointer\")\n"
+        + argu.getTabs() + "   Error(\"null pointer\")\n"
         + argu.getTabs() + nullLabel + ":\n"
         + argu.getTabs() + tmp2 + " = [" + tmp1 + "]\n"
         + indexval.code
         + argu.getTabs() + tmp2 + " = " + Operations.Lt(indexval.id, tmp2) + "\n"
         + argu.getTabs() + "if " + tmp2 + " goto :" + boundLabel +"\n"
-        + argu.getTabs() + "\tError(\"array index out of bounds\")\n"
+        + argu.getTabs() + "   Error(\"array index out of bounds\")\n"
         + argu.getTabs() + boundLabel + ":\n"
         + argu.getTabs() + tmp2 + " = " + Operations.MulS(indexval.id, "4") + "\n"
         + argu.getTabs() + tmp2 + " = " + Operations.Add(tmp2, tmp1) + "\n"
@@ -237,8 +385,8 @@ class CodeIdGenerator extends GJDepthFirst<CodeIdContainer,ContextType> {
     public CodeIdContainer visit(AndExpression n, ContextType argu) {
         CodeIdContainer left = n.f0.accept(this, argu);
         CodeIdContainer result = new CodeIdContainer();
-        String elseLable = argu.newLabel();
-        String endLable = argu.newLabel();
+        String elseLable = argu.newAndElseLabel();
+        String endLable = argu.newAndEndLabel();
         result.id = argu.newTemp();
         String tmp1 = argu.newTemp();
         result.code = left.code // assume newline handled inside
@@ -253,7 +401,7 @@ class CodeIdGenerator extends GJDepthFirst<CodeIdContainer,ContextType> {
         argu.tabs--;
         
         result.code += argu.getTabs() + elseLable + ":\n"
-        + argu.getTabs() + "\t" + result.id + " = 0\n"
+        + argu.getTabs() + "   " + result.id + " = 0\n"
         + argu.getTabs() + endLable + ":" + "\n";
 
 
@@ -288,7 +436,7 @@ class CodeIdGenerator extends GJDepthFirst<CodeIdContainer,ContextType> {
         CodeIdContainer result = new CodeIdContainer();
         result.id = argu.newTemp();
         result.code = left.code + right.code
-        + argu.getTabs() + result.id + " = " + Operations.Add(left.id, right.id); // Add(left.id right.id)
+        + argu.getTabs() + result.id + " = " + Operations.Add(left.id, right.id) + "\n"; // Add(left.id right.id)
         return result;
     }
      /**
@@ -302,7 +450,7 @@ class CodeIdGenerator extends GJDepthFirst<CodeIdContainer,ContextType> {
         CodeIdContainer result = new CodeIdContainer();
         result.id = argu.newTemp();
         result.code = left.code + right.code
-        + argu.getTabs() + result.id + " = " + Operations.Sub(left.id, right.id); // Sub(left.id right.id)
+        + argu.getTabs() + result.id + " = " + Operations.Sub(left.id, right.id) + "\n"; // Sub(left.id right.id)
         return result;
     }
 
@@ -317,7 +465,7 @@ class CodeIdGenerator extends GJDepthFirst<CodeIdContainer,ContextType> {
         CodeIdContainer result = new CodeIdContainer();
         result.id = argu.newTemp();
         result.code = left.code + right.code
-        + argu.getTabs() + result.id + " = " + Operations.MulS(left.id, right.id); // MulS(left.id right.id)
+        + argu.getTabs() + result.id + " = " + Operations.MulS(left.id, right.id) + "\n"; // MulS(left.id right.id)
         return result;
     }
 
@@ -337,7 +485,7 @@ class CodeIdGenerator extends GJDepthFirst<CodeIdContainer,ContextType> {
         + argu.getTabs() + t1 + " = " + "[" + left.id + "]" + "\n"
         + argu.getTabs() + t1 + " = " + Operations.Lt(right.id, t1) + "\n"
         + argu.getTabs() + "if " + t1 + " goto :" + bounds + "\n"
-        + argu.getTabs() + "\tError(\"array index out of bounds\")" + "\n"
+        + argu.getTabs() + "   Error(\"array index out of bounds\")" + "\n"
         + argu.getTabs() + bounds + ":" + "\n"
         + argu.getTabs() + t1 + " = " + Operations.MulS(right.id, "4") + "\n"
         + argu.getTabs() + t1 + " = " + Operations.Add(t1, left.id) + "\n";
@@ -359,7 +507,7 @@ class CodeIdGenerator extends GJDepthFirst<CodeIdContainer,ContextType> {
         String nulllabel = argu.newNullLabel();
         result.code = left.code 
         + argu.getTabs() + "if " + left.id + " goto :" + nulllabel + "\n"
-        + argu.getTabs() + "\t" +Operations.Error() + "\n"
+        + argu.getTabs() + "   " +Operations.Error() + "\n"
         + argu.getTabs() + nulllabel + ":" + "\n";
 
         result.id = "[" + left.id + "]";
@@ -392,9 +540,9 @@ class CodeIdGenerator extends GJDepthFirst<CodeIdContainer,ContextType> {
             + argu.getTabs() + result.id + " = call " + tmp + "(this" + arguments.id + ")\n";
         } else {
             String nulllabel = argu.newNullLabel();
-            result.code +=  argu.getTabs() + "if " + classToCall.id + "goto :" + nulllabel + "\n"
-            + argu.getTabs() + "\t" + Operations.Error() + "\n" 
-            + argu.getTabs() + ":" + nulllabel + "\n"
+            result.code +=  argu.getTabs() + "if " + classToCall.id + " goto :" + nulllabel + "\n"
+            + argu.getTabs() + "   " + Operations.Error() + "\n" 
+            + argu.getTabs() + nulllabel + ":\n"
             + argu.getTabs() + tmp + " = [" + classToCall.id + "]\n" // Sets tmp to base address of v-table
             + argu.getTabs() + tmp + " = [" + tmp + "+" + methodOffset + "]\n"
             + argu.getTabs() + result.id + " = call " + tmp + "(" + classToCall.id + arguments.id + ")\n"; 
@@ -556,7 +704,7 @@ class CodeIdGenerator extends GJDepthFirst<CodeIdContainer,ContextType> {
     public CodeIdContainer visit(AllocationExpression n, ContextType argu) {
         CodeIdContainer result = new CodeIdContainer();
         result.id = argu.newTemp();
-        result.code = argu.getTabs() + result.id + " = " + Operations.HeapAllocZ(ContextType.classVarField.get(n.f1.f0.tokenImage).entrySet().size() + 4) + "\n" // The amount of space needed is size of classVarField key map plus 4
+        result.code = argu.getTabs() + result.id + " = " + Operations.HeapAllocZ(ContextType.classVarOffsets.get(n.f1.f0.tokenImage).keySet().size()*4 + 4) + "\n" // The amount of space needed is size of classVarField key map plus 4
         + argu.getTabs() + "[" + result.id + "]" + " = :vmt_" + n.f1.f0.tokenImage + "\n"; // Assign v-table to first memory location
         return result;
     }

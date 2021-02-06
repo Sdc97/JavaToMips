@@ -15,6 +15,114 @@ public class UpperLevelVisitor extends GJVoidDepthFirst<ContextType>{
         n.f1.accept(info, argu);
     }
     
+    /**
+    * f0 -> Type()
+    * f1 -> Identifier()
+    * f2 -> ";"
+    */
+    public void visit(VarDeclaration n, ContextType argu) {
+
+        String typestr = n.f0.accept(new TypeEnvCreator(), argu);
+        if(!typestr.equals("int") && !typestr.equals("int[]") && !typestr.equals("boolean") && !ContextType.class_parents.containsKey(typestr))
+        {
+            throw new Error("Type error");
+        }
+    }
+
+    /**
+     * f0 -> "class"
+    * f1 -> Identifier()
+    * f2 -> "{"
+    * f3 -> "public"
+    * f4 -> "static"
+    * f5 -> "void"
+    * f6 -> "main"
+    * f7 -> "("
+    * f8 -> "String"
+    * f9 -> "["
+    * f10 -> "]"
+    * f11 -> Identifier()
+    * f12 -> ")"
+    * f13 -> "{"
+    * f14 -> ( VarDeclaration() )*
+    * f15 -> ( Statement() )*
+    * f16 -> "}"
+    * f17 -> "}"
+    */
+    public void visit(MainClass n, ContextType argu) {
+        argu.currclass = n.f1.f0.tokenImage;
+        argu.methodField = new HashMap<String,String>(); 
+        n.f14.accept(new TypeEnvCreator(), argu);
+    }
+
+    /**
+    * f0 -> "class"
+    * f1 -> Identifier()
+    * f2 -> "extends"
+    * f3 -> Identifier()
+    * f4 -> "{"
+    * f5 -> ( VarDeclaration() )*
+    * f6 -> ( MethodDeclaration() )*
+    * f7 -> "}"
+    */
+    public void visit(ClassExtendsDeclaration n, ContextType argu) {
+        ContextType tmp = new ContextType();
+        tmp.currclass = n.f1.f0.tokenImage;
+
+        Map<String,MethodDescriptor> currmethods = ContextType.class_to_methods.get(tmp.currclass);
+
+        for(Map.Entry<String,MethodDescriptor> entry : currmethods.entrySet()) { // Ensure that each method passes the noOverloading test.
+            ContextType.noOverloading(tmp.currclass, n.f3.f0.tokenImage, entry.getKey());
+        }
+
+        n.f6.accept(this, tmp); // Type check internal methods (20)
+        n.f5.accept(this,tmp);
+    }
+
+    /**
+    * f0 -> "public"
+    * f1 -> Type()
+    * f2 -> Identifier()
+    * f3 -> "("
+    * f4 -> ( FormalParameterList() )?
+    * f5 -> ")"
+    * f6 -> "{"
+    * f7 -> ( VarDeclaration() )*
+    * f8 -> ( Statement() )*
+    * f9 -> "return"
+    * f10 -> Expression()
+    * f11 -> ";"
+    * f12 -> "}"
+    */
+    public void visit(MethodDeclaration n, ContextType argu) {
+        argu.currclass = argu.currclass;
+
+        argu.methodArgField = new HashMap<String,String>();
+        n.f4.accept(this,argu); // Create and fill methodArgField, checking distinctness.
+
+        argu.methodField = new HashMap<String,String>();
+        n.f7.accept(new TypeEnvCreator(), argu); // Create and fill methodField, checking distinctness. Use TypeEnvCreator
+    }
+
+    /**
+    * f0 -> FormalParameter()
+    * f1 -> ( FormalParameterRest() )*
+    */
+    public void visit(FormalParameterList n, ContextType argu) { // Passes on to FormalParameter function below.
+        n.f0.accept(this, argu);
+        n.f1.accept(this, argu);
+    }
+
+    /**
+    * f0 -> Type()
+    * f1 -> Identifier()
+    */
+    public void visit(FormalParameter n, ContextType argu) {
+        if(argu.methodArgField.containsKey(n.f1.f0.tokenImage)) {
+            throw new Error("Type error");
+        }
+        argu.methodArgField.put(n.f1.f0.tokenImage, n.f0.accept(new TypeEnvCreator(), argu)); // Map id of identifier to string value of type.
+    }
 }
 
 // For filling out info in ContextType

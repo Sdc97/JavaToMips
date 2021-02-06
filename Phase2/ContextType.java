@@ -2,8 +2,8 @@ import java.util.*;
 
 public class ContextType {
 
-    public int tabs; // used for printing.
-    public Map<String,Integer> classVarOffsets; // created during method visitor, MUST BE COPIED OVER ALONGSIDE currclass
+    public int tabs = 0; // used for printing.
+    public static Map<String,Map<String,Integer>> classVarOffsets = new HashMap<>(); // holds class variable offsets for objects
     public static Map<String,Map<String,Integer>> classMethodOffsets = new HashMap<>(); // holds v tables offsets for all method names in class->(method->offset)
 
     public static String mainClass;
@@ -115,39 +115,74 @@ public class ContextType {
     }
 
     public String getTabs() {
-        return ""; // TODO add the int tabs for each ContextType, implement this method
+        String ret = "";
+        for(int i = 0; i < tabs; i++) {
+            ret += "   ";
+        }
+        return ret; 
     }
 
+    int tempnumber = 0;
     public String newTemp() {
-        return "";
+        String result = "t." + tempnumber;
+        tempnumber++;
+        return result;
     }
 
-    public String newLabel() {
-        return "";
+    static int andelselabelnumber = 0;
+    public String newAndElseLabel() {
+        String result = "ss" + andelselabelnumber + "_else";
+        andelselabelnumber++;
+        return result;
     }
 
+    static int andendlabelnumber = 0;
+    public String newAndEndLabel() {
+        String result = "ss" + andendlabelnumber + "_end";
+        andendlabelnumber++;
+        return result;
+    }
+
+    static int nulllabelnumber = 0;
     public String newNullLabel() {
-        return "";
+        String result = "null" + nulllabelnumber;
+        nulllabelnumber++;
+        return result;
     }
 
+    static int boundslabelnumber = 0;
     public String newBoundsLabel() {
-        return "";
+        String result = "bounds" + nulllabelnumber;
+        boundslabelnumber++;
+        return result;
     }
 
+    static int ifelselabelnumber = 0;
     public String newIfElseLabel() {
-        return "";
+        String result = "if" + ifelselabelnumber + "_else";
+        ifelselabelnumber++;
+        return result;
     }
 
+    static int ifendlabelnumber = 0;
     public String newIfEndLabel() {
-        return "";
+        String result = "if" + ifendlabelnumber + "_end";
+        ifendlabelnumber++;
+        return result;
     }
 
+    static int whilebeginlabelnumber = 0;
     public String newWhileBeginLabel() {
-        return "";
+        String result = "while" + whilebeginlabelnumber + "_top";
+        whilebeginlabelnumber++;
+        return result;
     }
 
+    static int whileendlabelnumber = 0;
     public String newWhileEndLabel() {
-        return "";
+        String result = "while" + whileendlabelnumber + "_end";
+        whileendlabelnumber++;
+        return result;
     }
 
     public boolean localIdent(String identifier){
@@ -158,7 +193,7 @@ public class ContextType {
     }
 
     public int findClassVarOffset(String id) {
-        return classVarOffsets.get(id) + 4;
+        return classVarOffsets.get(currclass).get(id);
     }
 
     public static int getMethodOffset(String className, String methodName) {
