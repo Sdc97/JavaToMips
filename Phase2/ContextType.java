@@ -152,7 +152,7 @@ public class ContextType {
 
     static int boundslabelnumber = 0;
     public String newBoundsLabel() {
-        String result = "bounds" + nulllabelnumber;
+        String result = "bounds" + boundslabelnumber;
         boundslabelnumber++;
         return result;
     }

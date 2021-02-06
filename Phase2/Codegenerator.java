@@ -243,14 +243,18 @@ public class Codegenerator extends GJDepthFirst <String, ContextType> {
     * f3 -> ";"
     */
     public String visit(AssignmentStatement n, ContextType argu) {
-        CodeIdContainer left = n.f0.accept(new CodeIdGenerator(), argu);
+        String left;
         CodeIdContainer tmp = n.f2.accept(new CodeIdGenerator(), argu);
         String _ret = "";
-        // ADD example
-        // tmp.code
-        // id = Add(id1 id2)
+        if(argu.localIdent(n.f0.f0.tokenImage)) // If identifier is a local var or method parameter
+        {
+            left = n.f0.f0.tokenImage;
+        }
+        else { // else it must be a class parameter
+            left = "[this+" + argu.findClassVarOffset(n.f0.f0.tokenImage) +"]";
+        }
         _ret += tmp.code  // assume that .code comes indented
-        + argu.getTabs() + left.id + " = " + tmp.id + "\n"; 
+        + argu.getTabs() + left + " = " + tmp.id + "\n"; 
         return _ret;
     }
 
@@ -272,7 +276,8 @@ public class Codegenerator extends GJDepthFirst <String, ContextType> {
         CodeIdContainer idval = n.f0.accept(new CodeIdGenerator(), argu); // base address of array
         CodeIdContainer indexval = n.f2.accept(new CodeIdGenerator(), argu); // id of index value
         CodeIdContainer rhsExp = n.f5.accept(new CodeIdGenerator(), argu);
-        result += argu.getTabs() + tmp1 + " = " + idval.id + "\n"
+        result += idval.code 
+        + argu.getTabs() + tmp1 + " = " + idval.id + "\n"
         + argu.getTabs() + "if " + tmp1 + " goto :" + nullLabel + "\n"
         + argu.getTabs() + "   Error(\"null pointer\")\n"
         + argu.getTabs() + nullLabel + ":\n"
@@ -481,6 +486,7 @@ class CodeIdGenerator extends GJDepthFirst<CodeIdContainer,ContextType> {
         CodeIdContainer result = new CodeIdContainer();
         String t1 = argu.newTemp(); // size of the array
         String bounds = argu.newBoundsLabel();
+        result.id = argu.newTemp();
         result.code = left.code + right.code
         + argu.getTabs() + t1 + " = " + "[" + left.id + "]" + "\n"
         + argu.getTabs() + t1 + " = " + Operations.Lt(right.id, t1) + "\n"
@@ -488,9 +494,8 @@ class CodeIdGenerator extends GJDepthFirst<CodeIdContainer,ContextType> {
         + argu.getTabs() + "   Error(\"array index out of bounds\")" + "\n"
         + argu.getTabs() + bounds + ":" + "\n"
         + argu.getTabs() + t1 + " = " + Operations.MulS(right.id, "4") + "\n"
-        + argu.getTabs() + t1 + " = " + Operations.Add(t1, left.id) + "\n";
-
-        result.id = "[" + t1 + "+4]";
+        + argu.getTabs() + t1 + " = " + Operations.Add(t1, left.id) + "\n"
+        + argu.getTabs() + result.id + " = " + "[" + t1 + "+4]\n";
 
         return result;
     }
@@ -665,7 +670,9 @@ class CodeIdGenerator extends GJDepthFirst<CodeIdContainer,ContextType> {
         result.id = n.f0.tokenImage;
     }
     else { // else it must be a class parameter
-        result.id = "[this+" + argu.findClassVarOffset(n.f0.tokenImage) +"]";
+        result.id = argu.newTemp();
+        result.code = argu.getTabs() + result.id + " = " + "[this+" + argu.findClassVarOffset(n.f0.tokenImage) +"]\n"; // Must be like this to work with other expressions and such. Yes it sucks.
+        //result.id = "[this+" + argu.findClassVarOffset(n.f0.tokenImage) +"]";
     }
     return result;
     }
