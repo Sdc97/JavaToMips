@@ -1,4 +1,6 @@
 syntaxtree/*
 visitor/*
-methodcalltest.java
 Phase2Tests/*
+Phase2Outputs/*
+methodcalltest.java
+visitortesting.java

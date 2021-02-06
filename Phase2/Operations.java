@@ -14,7 +14,7 @@ public class Operations {
 
     public static String MulS(String left, String right)
     {
-        return "MultS(" + left + " " + right + ")";   //MultS(a b)
+        return "MulS(" + left + " " + right + ")";   //MulS(a b)
     }
 
     public static String Eq(String left, String right)
