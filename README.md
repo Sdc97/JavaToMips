@@ -46,7 +46,7 @@ We utilize more temporary variables than are used in some of the examples, to av
 
 The UML for this phase is as follows:
 
-![alt text](./img/hw2_uml.png?raw=true)
+![alt text](./Phase2/img/hw2_uml.png?raw=true)
 
 ## Testing and Verification
 
