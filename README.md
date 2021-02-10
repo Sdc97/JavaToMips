@@ -24,9 +24,9 @@ All of the helper functions and type environment details were handled behind the
 Tests were written using pre filled out data structures in ContextClass to perform the type checking for lower level statements and expressions, as well as test the helper methods in ContextType itself to ensure behavior was what we expected. We ran our program with the phase 1 tester provided and were able to pass all of the test cases. Along with that, we also wrote a few of our own test cases for all of the edge cases we could think of, including declaring variables of nonexisting types, and overloading with different return types.
 
 
-# Phase 2: Intermediate Code Generation for Object-oriented Languages
+## Phase 2: Intermediate Code Generation for Object-oriented Languages
 
-## Requirements and specifications
+### Requirements and specifications
 
 In this part of the project, we were required to translate a MiniJava program into vapor, an intermediate code language that only deals with functions and memory, no instance of objects. The generated code should have the same functionality as the compiled java program. In order to correctly manage this, we broke the phase down into 3 parts: v-tables, function/object mappings, and actual code generation. 
 
@@ -36,7 +36,7 @@ In order to generate vapor code for java, a language with classes, objects, and 
 
 Class methods were distinguished by listing Classname.methodname(args) to have a standardized naming scheme. Every method for a class would take first an object "this" as an argument, which would be a pointer to the base memory address of the object, for access to other methods, and class data members. 
 
-## Design
+### Design
 
 We utilized many of the resources that we created from phase 1, through ContextType. We had already created mappings that included methodnames under their respective classes, so all we needed to do was to run the UpperLevelVisitor without the type checking. Once that information is filled out, we use VTableCreator to create and print our VTables whilest mapping the offsets in our ContextType. We also run a method in VTableCreator to map the variables to their proper offset, and use the topological ordering to handle variable inheritance.
 
@@ -48,7 +48,7 @@ The UML for this phase is as follows:
 
 ![alt text](./Phase2/img/hw2_uml.png?raw=true)
 
-## Testing and Verification
+### Testing and Verification
 
 To test this phase of the project, we first ran individual tests on our expression level visitors to ensure that the correct snippets of code were generated, then gradually expanding onto statements, making sure to check the control flow.
 
