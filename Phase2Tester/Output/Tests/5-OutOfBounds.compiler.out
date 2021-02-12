@@ -1,0 +1,43 @@
+const vmt_A
+   :A.run
+
+func Main()
+   t.0 = HeapAllocZ(4)
+   [t.0] = :vmt_A
+   if t.0 goto :null0
+      Error("null pointer")
+   null0:
+   t.1 = [t.0]
+   t.1 = [t.1+0]
+   t.2 = call t.1(t.0)
+   PrintIntS(t.2)
+   ret
+
+func A.run(this)
+   t.0 = call :AllocArray(20)
+   a = t.0
+   t.1 = [a]
+   t.1 = Lt(10 t.1)
+   if t.1 goto :bounds1
+      Error("array index out of bounds")
+   bounds1:
+   t.1 = MulS(10 4)
+   t.1 = Add(t.1 a)
+   PrintIntS([t.1+4])
+   t.2 = [a]
+   t.2 = Lt(40 t.2)
+   if t.2 goto :bounds1
+      Error("array index out of bounds")
+   bounds1:
+   t.2 = MulS(40 4)
+   t.2 = Add(t.2 a)
+   t.3 = [t.2+4]
+   ret t.3
+
+func AllocArray(size)
+   bytes = MulS(size 4)
+   bytes = Add(bytes 4)
+   v = HeapAllocZ(bytes)
+   [v] = size
+   ret v
+

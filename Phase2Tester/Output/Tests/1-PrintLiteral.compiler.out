@@ -1,0 +1,11 @@
+func Main()
+   PrintIntS(12)
+   ret
+
+func AllocArray(size)
+   bytes = MulS(size 4)
+   bytes = Add(bytes 4)
+   v = HeapAllocZ(bytes)
+   [v] = size
+   ret v
+
