@@ -37,18 +37,26 @@ public class V2VM {
   }
 
   public static void main(String args[]) {
-      try {
-          VaporProgram temp = parseVapor(System.in, System.out);
-          for(int i = 0; i < temp.dataSegments.length; i++) {
-            VDataSegment vdata = temp.dataSegments[i];
-            System.out.println(vdata.ident);
-            for(int j = 0; j < vdata.values.length; j++) {
-              System.out.println("\t" + vdata.values[j]);
-            }
+    try {
+        VaporProgram temp = parseVapor(System.in, System.out);
+        for(int i = 0; i < temp.dataSegments.length; i++) {
+          VDataSegment vdata = temp.dataSegments[i];
+          System.out.println(vdata.ident);
+          for(int j = 0; j < vdata.values.length; j++) {
+            System.out.println("\t" + vdata.values[j]);
           }
-      } catch (Throwable e) {
-          System.out.println(e.getMessage());
-          System.exit(1);
-      }
+        }
+        System.out.println("\n");
+        for(int i = 0; i < temp.functions.length; i++) {
+          VFunction vfunction = temp.functions[i];
+          System.out.println(vfunction.ident);
+          for(int j = 0; j < vfunction.body.length; j++) {
+            
+          }
+        }
+    } catch (Throwable e) {
+        System.out.println(e.getMessage());
+        System.exit(1);
+    }
   }
 }
