@@ -1,4 +1,4 @@
-
+package registeralloc;
 import java.util.*;
 
 public class Algorithm{

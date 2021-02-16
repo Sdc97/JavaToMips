@@ -1,3 +1,4 @@
+package registeralloc;
 public class Registers {
     //need to creat the registers in here
     private String register;

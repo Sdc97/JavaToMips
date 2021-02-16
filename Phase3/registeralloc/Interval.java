@@ -1,3 +1,4 @@
+package registeralloc;
 public class Interval {
     private String var;
     private int start;

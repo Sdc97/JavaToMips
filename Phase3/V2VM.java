@@ -5,6 +5,9 @@ import cs132.vapor.ast.VaporProgram;
 import cs132.vapor.ast.VBuiltIn.Op;
 import cs132.vapor.ast.*;
 import cs132.vapor.parser.*;
+import liveness.*;
+import registeralloc.*;
+
 import java.io.InputStreamReader;
 import java.io.IOException;
 import java.io.PrintStream;
@@ -51,7 +54,7 @@ public class V2VM {
           VFunction vfunction = temp.functions[i];
           System.out.println(vfunction.ident);
           for(int j = 0; j < vfunction.body.length; j++) {
-            
+            System.out.println("\t" + vfunction.body[j]);
           }
         }
     } catch (Throwable e) {
