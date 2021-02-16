@@ -5,8 +5,8 @@ import cs132.vapor.ast.VaporProgram;
 import cs132.vapor.ast.VBuiltIn.Op;
 import cs132.vapor.ast.*;
 import cs132.vapor.parser.*;
-import liveness.*;
-import registeralloc.*;
+//import liveness.*;
+//import registeralloc.*;
 
 import java.io.InputStreamReader;
 import java.io.IOException;
