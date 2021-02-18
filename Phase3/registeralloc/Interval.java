@@ -1,8 +1,12 @@
 package registeralloc;
+
+import java.util.List;
+
 public class Interval {
     private String var;
     private int start;
     private int end;
+    private List<Integer> liveness;
 
     public Interval(String v, int s, int e){
         var = v;
