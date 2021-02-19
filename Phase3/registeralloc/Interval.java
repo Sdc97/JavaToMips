@@ -1,7 +1,5 @@
 package registeralloc;
 
-import java.util.List;
-
 public class Interval {
     private String var;
     private int start;

@@ -1,29 +1,31 @@
 package liveness;
 
+import java.util.ArrayList;
 import java.util.HashMap;
+import java.util.HashSet;
 import java.util.List;
 import java.util.Map;
-import java.util.Vector;
+import java.util.Set;
 
 import cs132.vapor.ast.*;
 
 public class Graph extends VInstr.VisitorP<VFunction,RuntimeException> {
 
-    public List<List<Integer>> graph = new Vector<>();
+    public List<List<Integer>> graph = new ArrayList<>();
     public Map<Integer,String> defSet = new HashMap<>(); // can only define one variable per line really
-    public Map<Integer,List<String>> useSet = new HashMap<>();
+    public Map<Integer,Set<String>> useSet = new HashMap<>();
     public Map<String,Integer> labelLines = new HashMap<>();
     private int lineno = 0;
 
     @Override
     public void visit(VFunction arg0, VAssign arg1) throws RuntimeException {
-        List<Integer> next = new Vector<>();
+        List<Integer> next = new ArrayList<>();
         next.add(lineno + 1);
         graph.add(next);
 
         defSet.put(lineno, arg1.dest.toString());
         
-        List<String> used = new Vector<>();
+        Set<String> used = new HashSet<>();
         if(arg1.source instanceof VVarRef.Local) {
             used.add(arg1.source.toString());
         }
@@ -34,13 +36,13 @@ public class Graph extends VInstr.VisitorP<VFunction,RuntimeException> {
 
     @Override
     public void visit(VFunction arg0, VCall arg1) throws RuntimeException {
-        List<Integer> next = new Vector<>();
+        List<Integer> next = new ArrayList<>();
         next.add(lineno + 1);
         graph.add(next);
 
         defSet.put(lineno, arg1.dest.toString());
 
-        List<String> used = new Vector<>();
+        Set<String> used = new HashSet<>();
         used.add(arg1.addr.toString());
         for(int i = 0; i < arg1.args.length; i++) {
             if(arg1.args[i] instanceof VVarRef.Local) {
@@ -55,7 +57,7 @@ public class Graph extends VInstr.VisitorP<VFunction,RuntimeException> {
 
     @Override
     public void visit(VFunction arg0, VBuiltIn arg1) throws RuntimeException {
-        List<Integer> next = new Vector<>();
+        List<Integer> next = new ArrayList<>();
         next.add(lineno + 1);
         graph.add(next);
 
@@ -65,7 +67,7 @@ public class Graph extends VInstr.VisitorP<VFunction,RuntimeException> {
             defSet.put(lineno, ""); // Error line is useless
         }
 
-        List<String> used = new Vector<>();
+        Set<String> used = new HashSet<>();
         for(int i = 0; i < arg1.args.length; i++) {
             if(arg1.args[i] instanceof VVarRef.Local) {
                 used.add(arg1.args[i].toString());
@@ -79,7 +81,7 @@ public class Graph extends VInstr.VisitorP<VFunction,RuntimeException> {
 
     @Override
     public void visit(VFunction arg0, VMemWrite arg1) throws RuntimeException {
-        List<Integer> next = new Vector<>();
+        List<Integer> next = new ArrayList<>();
         next.add(lineno + 1);
         graph.add(next);
 
@@ -87,7 +89,7 @@ public class Graph extends VInstr.VisitorP<VFunction,RuntimeException> {
 
         defSet.put(lineno, ""); // No defined variables in memory writes
 
-        List<String> used = new Vector<>();
+        Set<String> used = new HashSet<>();
         used.add(dest);
         if(arg1.source instanceof VVarRef.Local) {
             used.add(arg1.source.toString());
@@ -100,14 +102,14 @@ public class Graph extends VInstr.VisitorP<VFunction,RuntimeException> {
 
     @Override
     public void visit(VFunction arg0, VMemRead arg1) throws RuntimeException {
-        List<Integer> next = new Vector<>();
+        List<Integer> next = new ArrayList<>();
         next.add(lineno + 1);
         graph.add(next);
 
         defSet.put(lineno, arg1.dest.toString()); // Variable defined in mem read. MUST be VVarRef, from API
 
         String src = ((VMemRef.Global)arg1.source).base.toString();
-        List<String> used = new Vector<>();
+        Set<String> used = new HashSet<>();
         used.add(src);
         useSet.put(lineno, used);
 
@@ -116,14 +118,14 @@ public class Graph extends VInstr.VisitorP<VFunction,RuntimeException> {
 
     @Override
     public void visit(VFunction arg0, VBranch arg1) throws RuntimeException {
-        List<Integer> next = new Vector<>();
+        List<Integer> next = new ArrayList<>();
         next.add(lineno + 1);
         next.add(labelLines.get(arg1.target.ident));
         graph.add(next);
 
         defSet.put(lineno, ""); // No defined variables in branch
 
-        List<String> used = new Vector<>();
+        Set<String> used = new HashSet<>();
         if(arg1.value instanceof VVarRef.Local) {
             used.add(arg1.value.toString());
         }
@@ -134,23 +136,23 @@ public class Graph extends VInstr.VisitorP<VFunction,RuntimeException> {
 
     @Override
     public void visit(VFunction arg0, VGoto arg1) throws RuntimeException {
-        List<Integer> next = new Vector<>();
+        List<Integer> next = new ArrayList<>();
         String label = arg1.target.toString().substring(1,arg1.target.toString().length());
         next.add(labelLines.get(label));
         graph.add(next);
         defSet.put(lineno, ""); // No defined variables in branch
-        useSet.put(lineno, new Vector<>());
+        useSet.put(lineno, new HashSet<>());
         lineno++;
     }
 
     @Override
     public void visit(VFunction arg0, VReturn arg1) throws RuntimeException {
-        List<Integer> next = new Vector<>();
+        List<Integer> next = new ArrayList<>();
         graph.add(next); // No out edge for return
 
         defSet.put(lineno, ""); // No defined variables in return
 
-        List<String> used = new Vector<>();
+        Set<String> used = new HashSet<>();
         if(arg1.value instanceof VVarRef.Local) {
             used.add(arg1.value.toString()); // check to make sure we are returning an actual value
         }

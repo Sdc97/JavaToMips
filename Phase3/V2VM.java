@@ -15,7 +15,9 @@ public class V2VM {
   public static void main(String args[]) {
     try {
         VaporProgram temp = parseVapor(System.in, System.out);
-        List<Interval> tmp = new IntervalCreation().createIntervals(temp);
+        for(int i = 0; i < temp.functions.length; i++) {
+          List<Interval> tmp = new IntervalCreation().createIntervals(temp.functions[i]);
+        }
     } catch (Throwable e) {
         System.out.println(e.getMessage());
         System.exit(1);
