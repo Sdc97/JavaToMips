@@ -5,7 +5,7 @@ public class Algorithm{
     private List<Interval> active;
     private List<Interval> j_list;
     private Registers reg_pool;
-    private Map<String, Registers> _register;
+    private Map<String, Registers> _register; // make sure this mapping is filled out after running
     private Set<String> _stack;
 
     private void LinearScanRegisterAllocation(){
