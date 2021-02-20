@@ -5,22 +5,26 @@ import java.util.*;
 import registeralloc.*;
 
 public class IntervalCreation {
-    List<Set<String>> inSet = new ArrayList<>();
-    List<Set<String>> outSet = new ArrayList<>();
+    private List<Set<String>> inSet = new ArrayList<>();
+    private List<Set<String>> outSet = new ArrayList<>();
+    private Map<Integer,Boolean> loops = new HashMap<>();
 
     public List<Interval> createIntervals(VFunction vfunction) {
         System.out.println(vfunction.ident + " " + vfunction.index);
         Graph currentfunc = new Graph(); // Control flow graph for the current function.
 
+        //Create label mappings in our graph, for referencing labels.
         for(int j = 0; j < vfunction.labels.length; j++) {
             currentfunc.labelLines.put(vfunction.labels[j].ident, vfunction.labels[j].instrIndex);
         }
 
+        // Create control flow graph
         for(int j = 0; j < vfunction.body.length; j++) {
             vfunction.body[j].accept(vfunction, currentfunc);
         }
-        currentfunc.printGraph();
+        //currentfunc.printGraph();
         
+        // Begin running in/out set creation.
         List<Set<String>> inSetPrime = new ArrayList<>();
         List<Set<String>> outSetPrime = new ArrayList<>();
         for(int i = 0; i < vfunction.body.length; i++) {
@@ -46,18 +50,57 @@ public class IntervalCreation {
             }
         } while(equalInOutSets(inSetPrime, outSetPrime));
 
+        /*
         for(int i = 0; i < inSet.size(); i++) {
             System.out.println("Line " + i + ": In: " + inSet.get(i) + " Out: " + outSet.get(i));
         }
+        */
 
+
+        detectLoops(currentfunc); // fills out loops. True for a line in a loop, false otherwise.
+
+        List<Interval> totals = new ArrayList<>();
         Map<String,Interval> currIntervals = new HashMap<>();
-        for(int i = 0; i < vfunction.body.length; i++) {
-            Set<String> currIn = inSet.get(i);
+        for(int i = 0; i < vfunction.body.length-1; i++) { // Handle EVERYTHING but return line
+            Set<String> nextIn = inSet.get(i+1);
             Set<String> currOut = outSet.get(i);
 
-            for(String tempval : currIn) {
+            for(String outval : currOut) { // for all items in the out set
+                if(!currIntervals.containsKey(outval)) { // If we already have an interval for it, dont need another yet.
+                    Interval tmpI = new Interval(outval, i);
+                    currIntervals.put(outval, tmpI);
+                }
+            }
+
+            if(!loops.get(i)) { // not in a loop, remove values normally.
+                Set<String> tmpSet = new HashSet<>(currIntervals.keySet());
+                for(String s : tmpSet) {
+                    if(!nextIn.contains(s)) { // If not in the next in set, died this line.
+                        Interval tmpI = currIntervals.remove(s);
+                        tmpI.setEnd(i);
+                        totals.add(tmpI);
+                    }
+                }
             }
         }
+
+        for(String s : inSet.get(vfunction.body.length-1)) { // Literally should only be one thing, the return value if one exists, else this wont run.
+            Interval tmpI = currIntervals.remove(s);
+            tmpI.setEnd(vfunction.body.length-1);
+            totals.add(tmpI);
+        }
+
+        for(Interval s: currIntervals.values()) { // Remove remaining intervals, assign death to second to last line. No need to remove from currIntervals map.
+            s.setEnd(vfunction.body.length-2);
+            totals.add(s);
+        }
+        
+
+        for(int i = 0; i < totals.size(); i++) {
+            Interval tmp = totals.get(i);
+            System.out.println("Variable name: " + tmp.Var() + " Start: " + tmp.Start() + " End: " + tmp.End());
+        }
+        
 
         return null; // temp
     }
@@ -78,6 +121,21 @@ public class IntervalCreation {
 
         return false;
     }
+
+    private void detectLoops(Graph g) {
+        for(int i = 0; i < g.graph.size(); i++) {
+            List<Integer> adj = g.graph.get(i);
+            loops.put(i, false);
+            for(int j = 0; j < adj.size(); j++) {
+                if(adj.get(j) < i) {
+                    for(int k = adj.get(j); k <= i; k++) {
+                        loops.put(k, true);
+                    }
+                }
+            }
+        }
+    }
+
 }
 // $t0 assumed to be taken by c
 /*  $t1 = 0

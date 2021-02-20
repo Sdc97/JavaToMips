@@ -10,6 +10,15 @@ public class Interval {
         start = s;
         end = e;
     }
+    public Interval(String v, int s) {
+        var = v;
+        start = s;
+    }
+
+    public void setEnd(int e) {
+        end = e;
+    }
+
     public String Var(){
         return var;
     }
