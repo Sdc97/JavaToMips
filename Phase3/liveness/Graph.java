@@ -1,11 +1,6 @@
 package liveness;
 
-import java.util.ArrayList;
-import java.util.HashMap;
-import java.util.HashSet;
-import java.util.List;
-import java.util.Map;
-import java.util.Set;
+import java.util.*;
 
 import cs132.vapor.ast.*;
 
@@ -138,6 +133,7 @@ public class Graph extends VInstr.VisitorP<VFunction,RuntimeException> {
     public void visit(VFunction arg0, VGoto arg1) throws RuntimeException {
         List<Integer> next = new ArrayList<>();
         String label = arg1.target.toString().substring(1,arg1.target.toString().length());
+        next.add(lineno + 1);
         next.add(labelLines.get(label));
         graph.add(next);
         defSet.put(lineno, ""); // No defined variables in branch

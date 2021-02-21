@@ -2,12 +2,20 @@ package registeralloc;
 public class Registers {
     //need to creat the registers in here
     private String register;
-    private Registers(String reg){
+    private String type; // "t" or "s"
+
+    public Registers(String reg, String t){
         register = reg;
+        type = t;
     }
 
-    public void R_remove(Registers reg)
-    {
-      //need to remove the register in here
+    public String getReg() {
+      return register;
+    }
+
+    public String getType() {
+      return type;
     }
 }
+
+

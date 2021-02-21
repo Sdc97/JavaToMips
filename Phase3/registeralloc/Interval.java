@@ -4,6 +4,9 @@ public class Interval {
     private String var;
     private int start;
     private int end;
+    public Registers register;
+    public String location;
+	public int offset;
 
     public Interval(String v, int s, int e){
         var = v;
@@ -30,5 +33,12 @@ public class Interval {
         return end;
     }
 
+    public boolean hasRegister() {
+        if (register == null) {
+            return false;
+        } else {
+            return true;
+        }
+    }
     
 }

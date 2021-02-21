@@ -10,7 +10,6 @@ public class IntervalCreation {
     private Map<Integer,Boolean> loops = new HashMap<>();
 
     public List<Interval> createIntervals(VFunction vfunction) {
-        System.out.println(vfunction.ident + " " + vfunction.index);
         Graph currentfunc = new Graph(); // Control flow graph for the current function.
 
         //Create label mappings in our graph, for referencing labels.
@@ -33,12 +32,14 @@ public class IntervalCreation {
             outSet.add(new HashSet<>());
             outSetPrime.add(new HashSet<>());
         }
-
+        int itval = 1;
         do {
             for(int i = 0; i < vfunction.body.length; i++) {
                 inSetPrime.set(i, new HashSet<>(inSet.get(i))); // set prime in set
                 outSetPrime.set(i, new HashSet<>(outSet.get(i))); // set prime out set
+
                 Set<String> currUse = currentfunc.useSet.get(i); // retrieve current use set.
+                
                 Set<String> newInSet = new HashSet<>(outSet.get(i)); // Create and copy new in set from outSet
                 newInSet.remove(currentfunc.defSet.get(i)); // remove the def element, if it exists
                 newInSet.addAll(currUse); // union with use set
@@ -48,23 +49,40 @@ public class IntervalCreation {
                     outSet.get(i).addAll(inSet.get(succ.get(j))); // Union across all successor in sets.
                 }
             }
+            /*
+            System.out.println("Iteration"  + itval++); // DEBUG, shows iterations.
+            for(int i = 0; i < vfunction.body.length; i++) {
+                System.out.println("Line " + i + " In: " + inSet.get(i) + " Out: " + outSet.get(i));
+            }
+            System.out.println();
+            */
         } while(equalInOutSets(inSetPrime, outSetPrime));
 
         /*
-        for(int i = 0; i < inSet.size(); i++) {
+        for(int i = 0; i < inSet.size(); i++) { // DEBUG TEXT LOOP
             System.out.println("Line " + i + ": In: " + inSet.get(i) + " Out: " + outSet.get(i));
         }
         */
-
-
+        
         detectLoops(currentfunc); // fills out loops. True for a line in a loop, false otherwise.
 
         List<Interval> totals = new ArrayList<>();
         Map<String,Interval> currIntervals = new HashMap<>();
+
+        // Handle first line in set independently.
+        for(String s : inSet.get(0)) {
+            Interval tmpI = new Interval(s, 0);
+            currIntervals.put(s, tmpI);
+            if(!outSet.get(0).contains(s)) {
+                tmpI.setEnd(0);
+                totals.add(tmpI);
+                currIntervals.remove(s);
+            }
+        }
+
         for(int i = 0; i < vfunction.body.length-1; i++) { // Handle EVERYTHING but return line
             Set<String> nextIn = inSet.get(i+1);
             Set<String> currOut = outSet.get(i);
-
             for(String outval : currOut) { // for all items in the out set
                 if(!currIntervals.containsKey(outval)) { // If we already have an interval for it, dont need another yet.
                     Interval tmpI = new Interval(outval, i);
@@ -72,7 +90,8 @@ public class IntervalCreation {
                 }
             }
 
-            if(!loops.get(i)) { // not in a loop, remove values normally.
+            // TODO: Might want to make it so values created in a loop can die in a loop, using way too much stack space.
+            if(!loops.get(i)) { // not in a loop, remove values normally. 
                 Set<String> tmpSet = new HashSet<>(currIntervals.keySet());
                 for(String s : tmpSet) {
                     if(!nextIn.contains(s)) { // If not in the next in set, died this line.
@@ -96,13 +115,7 @@ public class IntervalCreation {
         }
         
 
-        for(int i = 0; i < totals.size(); i++) {
-            Interval tmp = totals.get(i);
-            System.out.println("Variable name: " + tmp.Var() + " Start: " + tmp.Start() + " End: " + tmp.End());
-        }
-        
-
-        return null; // temp
+        return totals;
     }
 
     private boolean equalInOutSets(List<Set<String>> inPrime, List<Set<String>> outPrime) {
