@@ -306,7 +306,6 @@ public class PrintVisitor extends VInstr.VisitorPR<VarContainer, String, Runtime
     @Override
     public String visit(VarContainer arg0, VReturn arg1) throws RuntimeException {
         String result = "";
-        result += arg0.restoreSregs();
         if(arg1.value != null) {
             if(arg1.value instanceof VVarRef.Local) {
                 String retval = arg1.value.toString();
@@ -320,6 +319,7 @@ public class PrintVisitor extends VInstr.VisitorPR<VarContainer, String, Runtime
                 result += "   $v0 = " + arg1.value.toString() + "\n";
             }
         }
+        result += arg0.restoreSregs();
         result += "   ret\n";
         lineno++;
         return result;
