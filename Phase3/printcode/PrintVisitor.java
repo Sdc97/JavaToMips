@@ -33,7 +33,7 @@ public class PrintVisitor extends VInstr.VisitorPR<VarContainer, String, Runtime
                 RHS = lInt.register.getReg();
             } else {
                 if(needreg) {
-                    result += "$   v0 = " + lInt.location + "[" + arg0.getActualOffset(lInt) + "]";
+                    result += "$v0 = " + lInt.location + "[" + arg0.getActualOffset(lInt) + "]\n";
                     RHS = "$v0";
                 } else {
                     RHS = lInt.location + "[" + arg0.getActualOffset(lInt) + "]";
