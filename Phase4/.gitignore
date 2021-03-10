@@ -1,0 +1,5 @@
+vapor.jar
+mars.jar
+Phase4Tests/*
+Phase4Outputs/*
+*.pdf
