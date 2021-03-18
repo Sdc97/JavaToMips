@@ -14,7 +14,6 @@ Our design contains one packages; Printer which we only have one file named Code
 
 We are using same visitor as phase3, and we hanle each instructions, VAssign, VCall, VBuiltIn, VMemWrite, VMemRead, VBranch, VGoto, VReturn and print the instructions according to the MIPS snippet, and intructions provided in project page.   
 
-![alt text](./img/hw4_flow.png?raw=true)
 
 ## Testing and Verification
 
